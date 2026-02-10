@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Game HUB</title>
+    <style>
+        :root {
+            --neon-blue: #00f2ff;
+            --neon-pink: #ff00ff;
+            --neon-gold: #fbc02d;
+            --bg-dark: #020205;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background: var(--bg-dark);
+            color: #fff;
+            font-family: 'Avenir', 'Segoe UI', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* High-End Background Effects */
+        .universe {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 50% 50%, #0d1b2a 0%, #020205 100%);
+            z-index: -2;
+        }
+
+        .nebula-cloud {
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            background: url('https://www.transparenttextures.com/patterns/stardust.png');
+            opacity: 0.2;
+            animation: drift 60s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes drift {
+            from { transform: translate(-10%, -10%) rotate(0deg); }
+            to { transform: translate(0%, 0%) rotate(5deg); }
+        }
+
+        #app {
+            position: relative;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .screen {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s;
+            padding: 40px;
+        }
+
+        .hidden { display: none; opacity: 0; transform: scale(0.9); }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .title-group h1 {
+            font-size: 56px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 10px;
+            background: linear-gradient(to right, var(--neon-blue), var(--neon-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 15px rgba(0, 242, 255, 0.6));
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 40px;
+            padding: 20px 0;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid rgba(0, 242, 255, 0.3);
+            border-radius: 50px;
+            padding: 60px;
+            backdrop-filter: blur(25px);
+            text-align: center;
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:active { transform: scale(0.92); border-color: var(--neon-pink); }
+
+        #game-canvas {
+            flex: 1;
+            background: #000;
+            touch-action: none;
+        }
+
+        .mobile-controls {
+            height: 350px;
+            background: #08080c;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 2px solid #222;
+        }
+
+        .joystick-outer {
+            width: 180px; height: 180px;
+            background: rgba(255,255,255,0.05);
+            border: 4px solid var(--neon-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center; justify-content: center;
+        }
+
+        .joystick-knob {
+            width: 80px; height: 80px;
+            background: var(--neon-blue);
+            border-radius: 50%;
+            box-shadow: 0 0 40px var(--neon-blue);
+        }
+
+        .trigger-btn {
+            width: 160px; height: 160px;
+            background: linear-gradient(45deg, #ff00ff, #7000ff);
+            border-radius: 50%;
+            display: flex;
+            align-items: center; justify-content: center;
+            font-size: 28px; font-weight: 900;
+            box-shadow: 0 0 50px rgba(255, 0, 255, 0.5);
+        }
+
+        #hud {
+            position: absolute;
+            top: 40px; left: 40px;
+            font-size: 50px; font-weight: 900;
+            color: var(--neon-gold);
+            text-shadow: 0 0 20px #000;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="universe"><div class="nebula-cloud"></div></div>
+
+    <div id="app">
+        <div id="hub" class="screen">
+            <div class="header">
+                <div class="title-group">
+                    <h1>Game HUB</h1>
+                    <p style="color: var(--neon-blue); letter-spacing: 4px; font-weight:bold;">ULTIMATE MOBILE EDITION</p>
+                </div>
+                <div id="bank" style="font-size: 40px; color: var(--neon-gold); font-weight: 900;">$0</div>
+            </div>
+
+            <div class="game-grid">
+                <div class="card" onclick="launch()">
+                    <div style="font-size: 120px; margin-bottom: 20px;">🛸</div>
+                    <h2 style="font-size: 40px; letter-spacing: 2px;">GALAXY WAR</h2>
+                    <p style="opacity: 0.6; margin-top: 15px; font-size: 18px;">Animated Explosions • iPad Optimized</p>
+                    <button style="margin-top: 40px; padding: 20px 60px; border-radius: 40px; border:none; background: var(--neon-blue); font-weight: 900; font-size: 20px; color: #000;">PLAY NOW</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="world" class="screen hidden" style="padding: 0;">
+            <div id="hud">$0</div>
+            <canvas id="game-canvas"></canvas>
+            
+            <div class="mobile-controls">
+                <div class="joystick-outer" id="j-base">
+                    <div class="joystick-knob" id="j-knob"></div>
+                </div>
+                <div class="trigger-btn" id="fire-btn">FIRE</div>
+            </div>
+
+            <button onclick="location.reload()" style="position: absolute; top: 40px; right: 40px; background: rgba(0,0,0,0.7); border: 2px solid #f44; color: #f44; padding: 20px 30px; border-radius: 20px; font-weight: bold; font-size: 18px;">EXIT HUB</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const knob = document.getElementById('j-knob');
+        
+        let width, height, player = { x: 0, y: 0 }, 
+            bullets = [], enemies = [], particles = [], 
+            joy = { x: 0, y: 0, active: false }, 
+            score = 0, active = false;
+
+        function launch() {
+            document.getElementById('hub').classList.add('hidden');
+            document.getElementById('world').classList.remove('hidden');
+            setup();
+        }
+
+        function setup() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight - 350;
+            player.x = width / 2;
+            player.y = height - 120;
+            active = true;
+            requestAnimationFrame(loop);
+        }
+
+        function explode(x, y, color) {
+            for(let i=0; i<25; i++) {
+                particles.push({
+                    x, y,
+                    vx: (Math.random() - 0.5) * 18,
+                    vy: (Math.random() - 0.5) * 18,
+                    life: 1.0,
+                    color: color
+                });
+            }
+        }
+
+        // iPad Touch Logic
+        const jBase = document.getElementById('j-base');
+        jBase.addEventListener('touchstart', () => { joy.active = true; }, {passive: true});
+        
+        document.addEventListener('touchmove', e => {
+            if(!joy.active) return;
+            let touch = e.touches[0];
+            let rect = jBase.getBoundingClientRect();
+            let bx = rect.left + rect.width/2, by = rect.top + rect.height/2;
+            
+            let dx = touch.clientX - bx, dy = touch.clientY - by;
+            let dist = Math.min(70, Math.hypot(dx, dy));
+            let angle = Math.atan2(dy, dx);
+            
+            joy.x = (Math.cos(angle) * dist) / 70;
+            joy.y = (Math.sin(angle) * dist) / 70;
+            knob.style.transform = `translate(${joy.x * 50}px, ${joy.y * 50}px)`;
+        }, {passive: false});
+
+        document.addEventListener('touchend', () => {
+            joy.active = false; joy.x = 0; joy.y = 0;
+            knob.style.transform = 'translate(0,0)';
+        });
+
+        document.getElementById('fire-btn').addEventListener('touchstart', () => {
+            if(active) bullets.push({ x: player.x, y: player.y - 50 });
+        }, {passive: true});
+
+        function loop() {
+            if(!active) return;
+            ctx.fillStyle = 'rgba(2, 2, 5, 0.3)';
+            ctx.fillRect(0, 0, width, height);
+
+            // Movement with clamping
+            player.x = Math.max(50, Math.min(width - 50, player.x + joy.x * 15));
+            player.y = Math.max(50, Math.min(height - 50, player.y + joy.y * 15));
+
+            // Ship Render
+            ctx.shadowBlur = 25; ctx.shadowColor = '#00f2ff';
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.moveTo(player.x, player.y - 50);
+            ctx.lineTo(player.x - 35, player.y + 25);
+            ctx.lineTo(player.x + 35, player.y + 25);
+            ctx.fill();
+
+            // Bullets
+            bullets.forEach((b, i) => {
+                b.y -= 25;
+                ctx.fillStyle = '#fff000';
+                ctx.fillRect(b.x - 4, b.y, 8, 30);
+                if(b.y < 0) bullets.splice(i, 1);
+            });
+
+            // Enemies
+            if(Math.random() < 0.05) {
+                enemies.push({ x: Math.random() * (width - 100) + 50, y: -60, s: 4 + Math.random() * 4 });
+            }
+            enemies.forEach((e, i) => {
+                e.y += e.s;
+                ctx.shadowColor = '#ff00ff'; ctx.fillStyle = '#ff00ff';
+                ctx.beginPath();
+                ctx.arc(e.x, e.y, 30, 0, Math.PI * 2);
+                ctx.fill();
+
+                bullets.forEach((b, bi) => {
+                    if(Math.hypot(b.x - e.x, b.y - e.y) < 40) {
+                        explode(e.x, e.y, '#ff00ff');
+                        enemies.splice(i, 1);
+                        bullets.splice(bi, 1);
+                        score += 100;
+                        document.getElementById('hud').innerText = '$' + score;
+                    }
+                });
+                if(e.y > height + 50) enemies.splice(i, 1);
+            });
+
+            // Particles
+            particles.forEach((p, i) => {
+                p.x += p.vx; p.y += p.vy; p.life -= 0.03;
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x, p.y, 6, 6);
+                if(p.life <= 0) particles.splice(i, 1);
+            });
+            ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+
+            requestAnimationFrame(loop);
+        }
+    </script>
+</body>
+</html>
