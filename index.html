@@ -2,299 +2,272 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-    <title>NeuroVest // Kinetic Pro V8</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
+    <title>NeuroVest V17 // Mobile Optimized</title>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
         :root {
-            --bg: #0b0e11; --panel: #15191e; --card: #1e2329;
-            --accent: #00ffcc; --up: #00ff88; --down: #ff3366;
-            --text: #ffffff; --dim: #848e9c; --border: rgba(255,255,255,0.08);
+            --bg: #050708; --panel: #0d1117; --card: #161b22;
+            --accent: #00f2ff; --up: #00ff88; --down: #ff3366;
+            --text: #f0f6fc; --dim: #8b949e; --border: rgba(240, 246, 252, 0.1);
+        }
+        * { 
+            margin: 0; padding: 0; box-sizing: border-box; 
+            font-family: 'Inter', sans-serif; 
+            /* Fixed: Prevents zooming on fast taps */
+            touch-action: manipulation; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        body { background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
+        #app { display: grid; grid-template-columns: 80px 1fr 360px; height: 100vh; }
+
+        /* MOBILE OVERRIDES */
+        @media (max-width: 900px) {
+            #app { grid-template-columns: 60px 1fr; }
+            .trade-panel { display: none; } /* Simplified for mobile focus */
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background: var(--bg); color: var(--text); height: 100dvh; overflow: hidden; }
-
-        #app { display: grid; grid-template-columns: 75px 1fr 340px; height: 100vh; width: 100vw; }
+        /* NOTIFICATIONS */
+        #notif-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .notif { 
+            background: var(--card); border: 1px solid var(--border); padding: 15px 20px; border-radius: 12px; 
+            color: #fff; font-size: 13px; font-weight: 700; min-width: 260px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); transform: translateX(120%); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex; align-items: center; gap: 12px; pointer-events: all;
+        }
+        .notif.show { transform: translateX(0); }
+        .notif.success { border-left: 4px solid var(--up); }
+        .notif.error { border-left: 4px solid var(--down); }
 
         /* SIDEBAR */
-        .sidebar { background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 25px 0; gap: 15px; z-index: 100; }
-        .nav-item { width: 50px; height: 50px; border-radius: 14px; color: var(--dim); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); font-size: 24px; }
-        .nav-item:hover { color: #fff; transform: translateY(-2px); }
-        .nav-item.active { background: var(--accent); color: #000; box-shadow: 0 10px 20px rgba(0, 255, 204, 0.3); }
+        .sidebar { background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 30px 0; gap: 20px; }
+        .nav-item { width: 50px; height: 50px; border-radius: 12px; color: var(--dim); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; font-size: 24px; }
+        .nav-item.active { background: var(--accent); color: #000; box-shadow: 0 0 20px rgba(0, 242, 255, 0.4); }
 
         /* VIEWS */
-        .view-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .view { display: none; flex-direction: column; height: 100%; width: 100%; }
+        .view { display: none; flex-direction: column; height: 100%; overflow: hidden; }
         .view.active { display: flex; }
+        header { height: 80px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 30px; background: var(--panel); }
 
-        header { height: 75px; border-bottom: 1px solid var(--border); background: var(--panel); display: flex; align-items: center; justify-content: space-between; padding: 0 30px; }
-        .avatar { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--accent); object-fit: cover; }
-
-        /* CHART AREA */
-        .chart-area { flex: 1; position: relative; background: radial-gradient(circle at 50% 10%, #1e2329 0%, #0b0e11 100%); }
+        /* CHART */
+        .chart-container { flex: 1; position: relative; background: #050708; }
         canvas { width: 100%; height: 100%; }
 
-        /* WALLET VIEW GRID */
-        .wallet-grid { padding: 30px; display: grid; gap: 15px; overflow-y: auto; }
-        .market-card { background: var(--card); padding: 20px; border-radius: 18px; border: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; align-items: center; transition: 0.2s; cursor: pointer; }
-        .market-card:hover { border-color: var(--accent); background: #252a32; }
+        /* WALLET */
+        .wallet-header { padding: 40px; background: linear-gradient(180deg, #161b22 0%, #050708 100%); text-align: center; border-bottom: 1px solid var(--border); position: relative; }
+        .total-money { font-size: clamp(32px, 8vw, 56px); font-weight: 900; letter-spacing: -2px; color: var(--accent); }
+        .sell-all-btn { 
+            margin-top: 15px; background: rgba(255, 51, 102, 0.1); color: var(--down); 
+            border: 1px solid var(--down); padding: 10px 20px; border-radius: 10px; 
+            font-size: 12px; font-weight: 800; cursor: pointer; transition: 0.2s;
+        }
+        .sell-all-btn:active { transform: scale(0.95); background: var(--down); color: white; }
 
-        /* ORDER PANEL (FIXED UI) */
-        .order-panel { background: var(--panel); border-left: 1px solid var(--border); padding: 30px; display: flex; flex-direction: column; gap: 15px; }
-        .price-hero { font-size: 40px; font-weight: 900; letter-spacing: -1.5px; margin-bottom: 10px; }
-        
-        .btn-buy { background: var(--up); color: #000; border: none; padding: 20px; border-radius: 15px; font-weight: 900; cursor: pointer; font-size: 16px; box-shadow: 0 4px 15px rgba(0,255,136,0.2); }
-        .btn-sell { background: transparent; border: 2px solid var(--down); color: var(--down); padding: 18px; border-radius: 15px; font-weight: 900; cursor: pointer; }
-        .btn-buy:active, .btn-sell:active { transform: scale(0.96); }
+        /* ASIDE */
+        .trade-panel { background: var(--panel); border-left: 1px solid var(--border); padding: 30px; display: flex; flex-direction: column; gap: 20px; }
+        .input-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; color: #fff; font-size: 18px; font-weight: 800; width: 100%; outline: none; }
+        .btn { border: none; padding: 20px; border-radius: 14px; font-weight: 900; cursor: pointer; transition: 0.2s; }
+        .btn:active { transform: scale(0.96); opacity: 0.8; }
+        .btn-buy { background: var(--up); color: #000; }
+        .btn-sell { border: 2px solid var(--down); background: none; color: var(--down); }
 
-        /* DYNAMIC STATS UNDER BUTTONS */
-        .live-stats-box { background: rgba(255,255,255,0.03); border-radius: 15px; padding: 18px; margin-top: 10px; border: 1px dashed var(--border); }
-        .stat-line { display: flex; justify-content: space-between; margin-bottom: 8px; }
-        .stat-line:last-child { margin-bottom: 0; }
-        .label { font-size: 11px; font-weight: 800; color: var(--dim); text-transform: uppercase; }
-        .value { font-size: 14px; font-weight: 900; }
-
-        #settingsDrawer { position: fixed; top: 0; right: -420px; width: 400px; height: 100%; background: var(--panel); border-left: 1px solid var(--border); z-index: 2000; transition: 0.5s cubic-bezier(0.16, 1, 0.3, 1); padding: 50px 40px; }
-        #settingsDrawer.open { right: 0; box-shadow: -50px 0 100px rgba(0,0,0,0.6); }
-
-        .input-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px; color: #fff; width: 100%; outline: none; margin-top: 8px; font-size: 16px; }
+        .asset-row { background: var(--card); padding: 25px; border-radius: 16px; margin: 10px 20px; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
     </style>
 </head>
 <body>
 
+<div id="notif-container"></div>
+
 <div id="app">
     <nav class="sidebar">
-        <div class="nav-item active" id="nav-m" onclick="ui.switchView('market')"><i class="ph-fill ph-chart-line-up"></i></div>
-        <div class="nav-item" id="nav-w" onclick="ui.switchView('wallet')"><i class="ph-fill ph-wallet"></i></div>
-        <div class="nav-item" onclick="ui.toggleSettings()"><i class="ph-fill ph-gear-six"></i></div>
+        <div class="nav-item active" id="n-market" onclick="ui.view('market')"><i class="ph-fill ph-chart-line-up"></i></div>
+        <div class="nav-item" id="n-wallet" onclick="ui.view('wallet')"><i class="ph-fill ph-suitcase"></i></div>
+        <div class="nav-item" id="n-settings" onclick="ui.view('settings')"><i class="ph-fill ph-user-gear"></i></div>
     </nav>
 
-    <div class="view-container">
+    <main style="flex:1; overflow:hidden;">
         <div id="view-market" class="view active">
             <header>
-                <div style="display:flex; align-items:center; gap:20px;">
-                    <select id="stockSelect" onchange="sim.changeStock(this.value)" style="background:none; border:none; color:#fff; font-size:24px; font-weight:900; outline:none; cursor:pointer;">
-                        <option value="JSDA">JSDA / Soda</option>
-                        <option value="TSLA">TSLA / Tesla</option>
-                        <option value="BRK.A">BRK.A / Berkshire</option>
-                        <option value="ODD">ODD / Oddity</option>
-                    </select>
-                </div>
-                <div class="user-trigger" onclick="ui.toggleSettings()" style="display:flex; align-items:center; gap:12px; cursor:pointer;">
-                    <span id="userNameDisp" style="font-size:13px; font-weight:800; letter-spacing:0.5px;">TRADER</span>
-                    <img id="userImgDisp" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" class="avatar">
-                </div>
+                <select id="stockPicker" onchange="sim.changeStock(this.value)" style="background:none; border:none; color:#fff; font-size:20px; font-weight:900; outline:none;">
+                    <option value="ODD">ODDITY Tech (ODD)</option>
+                    <option value="TSLA">Tesla (TSLA)</option>
+                    <option value="BRK.A">Berkshire (BRK.A)</option>
+                    <option value="JSDA">Jones Soda (JSDA)</option>
+                </select>
             </header>
-            <div class="chart-area"><canvas id="mainChart"></canvas></div>
+            <div class="chart-container"><canvas id="mainChart"></canvas></div>
         </div>
 
         <div id="view-wallet" class="view">
-            <header><h2>Market Overview</h2></header>
-            <div class="wallet-grid" id="walletList"></div>
-        </div>
-    </div>
-
-    <aside class="order-panel">
-        <div id="sidePrice" class="price-hero">$0.00</div>
-        
-        <div style="display:flex; flex-direction:column; gap:12px;">
-            <div class="input-wrap">
-                <label class="label">Amount of Shares</label>
-                <input type="number" id="qty" value="1" class="input-box">
+            <div class="wallet-header">
+                <p style="font-size:11px; color:var(--dim); font-weight:800; text-transform:uppercase;">Net Worth</p>
+                <div class="total-money" id="netWorthDisplay">$0.00</div>
+                <div id="walletCashDisp" style="color:var(--up); font-weight:700; margin-top:5px;">Cash: $0.00</div>
+                <button class="sell-all-btn" onclick="sim.sellAll()">SELL ALL ASSETS</button>
             </div>
-            <button class="btn-buy" onclick="sim.trade('buy')">BUY ORDER</button>
-            <button class="btn-sell" onclick="sim.trade('sell')">SELL ORDER</button>
+            <div id="walletList" style="overflow-y:auto; padding-bottom:40px;"></div>
         </div>
 
-        <div class="live-stats-box">
-            <div class="stat-line">
-                <span class="label">Cash Balance</span>
-                <span id="cashDisp" class="value" style="color:var(--accent)">$0.00</span>
+        <div id="view-settings" class="view">
+            <header><h2>Settings</h2></header>
+            <div style="padding:30px;">
+                <button class="btn" style="border: 1px solid var(--down); color: var(--down); width:100%;" onclick="ui.reset()">WIPE ALL DATA</button>
             </div>
-            <div class="stat-line">
-                <span class="label">Owned Shares</span>
-                <span id="unitsDisp" class="value">0</span>
-            </div>
-            <div class="stat-line">
-                <span class="label">Total PNL</span>
-                <span id="pnlDisp" class="value">$0.00</span>
-            </div>
+        </div>
+    </main>
+
+    <aside class="trade-panel">
+        <div id="sidePrice" style="font-size: 42px; font-weight: 950;">$0.00</div>
+        <div id="sideChange" style="font-size: 14px; font-weight: 800;">0.00%</div>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            <label style="font-size:11px; color:var(--dim)">SHARES</label>
+            <input type="number" id="tradeQty" value="1" class="input-box">
+            <button class="btn btn-buy" onclick="sim.trade('buy')">BUY</button>
+            <button class="btn btn-sell" onclick="sim.trade('sell')">SELL</button>
         </div>
     </aside>
 </div>
 
-<div id="settingsDrawer">
-    <i class="ph ph-x" onclick="ui.toggleSettings()" style="cursor:pointer; font-size:28px;"></i>
-    <h2 style="margin:40px 0 20px 0; font-weight:900; font-size:32px;">PROFILE</h2>
-    <label class="label">Trader Alias</label>
-    <input type="text" id="nameInput" class="input-box" oninput="ui.saveProfile()">
-    <label class="label" style="display:block; margin-top:25px;">Avatar Image</label>
-    <input type="file" id="avatarUpload" onchange="ui.handleAvatar(this)" style="margin-top:10px;">
-    <button onclick="ui.resetAll()" style="margin-top:60px; color:var(--down); background:none; border:none; cursor:pointer; font-weight:800;">WIPE TERMINAL DATA</button>
-</div>
-
 <script>
     const sim = {
-        active: 'TSLA',
-        data: JSON.parse(localStorage.getItem('nv_v8')) || {
-            cash: 100000,
-            portfolio: { 'JSDA': 0, 'TSLA': 0, 'BRK.A': 0, 'ODD': 0 },
-            avgCosts: { 'JSDA': 0, 'TSLA': 0, 'BRK.A': 0, 'ODD': 0 },
-            name: "New Trader",
-            avatar: null
-        },
+        ticker: 'ODD',
+        db: JSON.parse(localStorage.getItem('nv_v17')) || { cash: 10000, portfolio: {ODD: 0, TSLA: 0, "BRK.A": 0, JSDA: 0} },
         stocks: {
-            'JSDA': { p: 0.45, vol: 0.012, hist: [], precision: 4 },
-            'TSLA': { p: 185.00, vol: 0.003, hist: [], precision: 2 },
-            'BRK.A': { p: 615000, vol: 0.0005, hist: [], precision: 0 },
-            'ODD': { p: 15.00, vol: 0.006, hist: [], precision: 2 }
+            'ODD': { p: 13.75, vol: 0.12, bias: -0.78 },
+            'TSLA': { p: 405.00, vol: 0.02, bias: -0.02 },
+            'BRK.A': { p: 753140, vol: 0.001, bias: 0.03 },
+            'JSDA': { p: 0.31, vol: 0.18, bias: 0.05 }
         },
+        hist: [],
 
         init() {
             this.canvas = document.getElementById('mainChart');
             this.ctx = this.canvas.getContext('2d');
-            
-            // Generate distinct histories
-            for(let s in this.stocks) {
-                const stk = this.stocks[s];
-                if(s === 'ODD') { // Special ODD Cliff Drop
-                    for(let i=0; i<150; i++) stk.hist.push(40 + Math.random()*15);
-                    for(let i=0; i<30; i++) stk.hist.push(stk.hist[stk.hist.length-1] * 0.7);
-                    for(let i=0; i<100; i++) stk.hist.push(15 + (Math.random()-0.5));
-                } else {
-                    for(let i=0; i<280; i++) {
-                        stk.p += stk.p * (stk.vol * (Math.random() - 0.5));
-                        stk.hist.push(stk.p);
-                    }
-                }
-            }
-
-            ui.loadProfile();
+            window.addEventListener('resize', () => this.resize());
             this.resize();
-            window.onresize = () => this.resize();
-            setInterval(() => this.tick(), 250);
-            this.animate();
+            this.generate();
+            this.loop();
+            ui.update();
         },
 
-        tick() {
-            for(let s in this.stocks) {
-                const stk = this.stocks[s];
-                let mv = (stk.vol * (Math.random() - 0.5));
-                if(s === 'JSDA' && Math.random() > 0.97) mv += 0.4; // Penny stock spike
-                stk.p += stk.p * mv;
-                stk.hist.push(stk.p);
-                if(stk.hist.length > 300) stk.hist.shift();
-            }
-            this.save();
-            this.updateUI();
+        generate() {
+            this.hist = [];
+            let s = this.stocks[this.ticker];
+            for(let i=0; i<150; i++) this.hist.push(s.p);
         },
 
         trade(type) {
-            const qty = parseInt(document.getElementById('qty').value) || 0;
-            const stk = this.stocks[this.active];
-            const cost = qty * stk.p;
-
-            if(type === 'buy' && this.data.cash >= cost && qty > 0) {
-                const totalCost = (this.data.avgCosts[this.active] * this.data.portfolio[this.active]) + cost;
-                this.data.portfolio[this.active] += qty;
-                this.data.avgCosts[this.active] = totalCost / this.data.portfolio[this.active];
-                this.data.cash -= cost;
-            } else if(type === 'sell' && this.data.portfolio[this.active] >= qty && qty > 0) {
-                this.data.cash += cost;
-                this.data.portfolio[this.active] -= qty;
-                if(this.data.portfolio[this.active] === 0) this.data.avgCosts[this.active] = 0;
+            let q = parseInt(document.getElementById('tradeQty').value) || 0;
+            let p = this.stocks[this.ticker].p;
+            if(type === 'buy' && this.db.cash >= q*p) {
+                this.db.cash -= q*p;
+                this.db.portfolio[this.ticker] = (this.db.portfolio[this.ticker] || 0) + q;
+                ui.notify("Bought", `${q} shares of ${this.ticker}`, "success");
+            } else if(type === 'sell' && (this.db.portfolio[this.ticker] || 0) >= q) {
+                this.db.cash += q*p;
+                this.db.portfolio[this.ticker] -= q;
+                ui.notify("Sold", `${q} shares of ${this.ticker}`, "success");
+            } else {
+                ui.notify("Error", "Check funds/shares", "error");
             }
             this.save();
-            this.updateUI();
+            ui.update();
         },
 
-        save() { localStorage.setItem('nv_v8', JSON.stringify(this.data)); },
-
-        updateUI() {
-            const stk = this.stocks[this.active];
-            const pStr = `$${stk.p.toLocaleString(undefined, {minimumFractionDigits: stk.precision})}`;
-            document.getElementById('sidePrice').innerText = pStr;
-            document.getElementById('cashDisp').innerText = `$${Math.floor(this.data.cash).toLocaleString()}`;
-            document.getElementById('unitsDisp').innerText = `${this.data.portfolio[this.active]} Shares`;
-            
-            const pnl = (stk.p - this.data.avgCosts[this.active]) * this.data.portfolio[this.active];
-            const pnlEl = document.getElementById('pnlDisp');
-            pnlEl.innerText = (pnl >= 0 ? '+$' : '-$') + Math.abs(pnl).toFixed(2);
-            pnlEl.style.color = pnl >= 0 ? 'var(--up)' : 'var(--down)';
-
-            if(document.getElementById('view-wallet').classList.contains('active')) ui.renderWallet();
-        },
-
-        changeStock(val) { this.active = val; this.updateUI(); },
-        resize() { this.canvas.width = this.canvas.offsetWidth; this.canvas.height = this.canvas.offsetHeight; },
-
-        animate() {
-            const ctx = this.ctx; const h = this.canvas.height; const w = this.canvas.width;
-            const hist = this.stocks[this.active].hist;
-            ctx.clearRect(0,0,w,h);
-            const min = Math.min(...hist); const max = Math.max(...hist); const range = (max - min) || 1;
-            ctx.beginPath(); ctx.strokeStyle = '#00ffcc'; ctx.lineWidth = 4;
-            for(let i=0; i<hist.length; i++) {
-                const x = (i / (hist.length-1)) * w;
-                const y = h - ((hist[i] - min) / range) * (h * 0.7) - (h * 0.15);
-                if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+        // FIXED: Sell All Button Logic
+        sellAll() {
+            let liquidatedCount = 0;
+            for (let symbol in this.db.portfolio) {
+                let amount = this.db.portfolio[symbol];
+                if (amount > 0) {
+                    let currentPrice = this.stocks[symbol].p;
+                    this.db.cash += (amount * currentPrice);
+                    this.db.portfolio[symbol] = 0;
+                    liquidatedCount++;
+                }
             }
+            
+            if(liquidatedCount > 0) {
+                ui.notify("Panic Sell", "All assets converted to cash", "error");
+                this.save();
+                ui.update();
+                ui.renderWallet();
+            } else {
+                ui.notify("Clear", "No assets to sell", "success");
+            }
+        },
+
+        changeStock(v) { this.ticker = v; this.generate(); ui.update(); },
+        save() { localStorage.setItem('nv_v17', JSON.stringify(this.db)); },
+        resize() {
+            this.canvas.width = this.canvas.offsetWidth * window.devicePixelRatio;
+            this.canvas.height = this.canvas.offsetHeight * window.devicePixelRatio;
+            this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        },
+
+        loop() {
+            setInterval(() => {
+                let s = this.stocks[this.ticker];
+                s.p *= (1 + (Math.random()-0.5)*(s.vol/20));
+                this.hist.push(s.p);
+                this.hist.shift();
+                ui.update();
+            }, 600);
+            this.draw();
+        },
+
+        draw() {
+            let ctx = this.ctx; let w = this.canvas.width/window.devicePixelRatio; let h = this.canvas.height/window.devicePixelRatio;
+            ctx.clearRect(0,0,w,h);
+            let min = Math.min(...this.hist), max = Math.max(...this.hist), range = (max - min) || 1;
+            let color = this.hist[0] < this.hist[this.hist.length-1] ? '#00ff88' : '#ff3366';
+            ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.lineJoin = 'round';
+            this.hist.forEach((v, i) => {
+                let x = (i/(this.hist.length-1))*w;
+                let y = h - ((v-min)/range)*(h*0.8) - (h*0.1);
+                if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+            });
             ctx.stroke();
-            const g = ctx.createLinearGradient(0,0,0,h);
-            g.addColorStop(0, 'rgba(0, 255, 204, 0.15)'); g.addColorStop(1, 'transparent');
-            ctx.fillStyle = g; ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.fill();
-            requestAnimationFrame(() => this.animate());
+            requestAnimationFrame(() => this.draw());
         }
     };
 
     const ui = {
-        switchView(id) {
+        view(id) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(v => v.classList.remove('active'));
             document.getElementById('view-'+id).classList.add('active');
-            document.getElementById('nav-'+id[0]).classList.add('active');
+            document.getElementById('n-'+id).classList.add('active');
             if(id === 'wallet') this.renderWallet();
         },
-        toggleSettings() { document.getElementById('settingsDrawer').classList.toggle('open'); },
-        loadProfile() {
-            document.getElementById('userNameDisp').innerText = sim.data.name;
-            document.getElementById('nameInput').value = sim.data.name;
-            if(sim.data.avatar) document.getElementById('userImgDisp').src = sim.data.avatar;
+        notify(title, msg, type) {
+            const container = document.getElementById('notif-container');
+            const el = document.createElement('div');
+            el.className = `notif ${type}`;
+            el.innerHTML = `<div><div style="font-weight:900">${title}</div><div style="font-size:11px">${msg}</div></div>`;
+            container.appendChild(el);
+            setTimeout(() => el.classList.add('show'), 10);
+            setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 400); }, 2500);
         },
-        saveProfile() { sim.data.name = document.getElementById('nameInput').value; this.loadProfile(); sim.save(); },
-        handleAvatar(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    sim.data.avatar = e.target.result;
-                    document.getElementById('userImgDisp').src = e.target.result;
-                    sim.save();
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
+        update() {
+            let s = sim.stocks[sim.ticker];
+            document.getElementById('sidePrice').innerText = `$${s.p.toLocaleString(undefined, {minimumFractionDigits: s.p < 1 ? 4 : 2})}`;
+            let totalVal = sim.db.cash;
+            for(let k in sim.stocks) totalVal += (sim.db.portfolio[k] || 0) * sim.stocks[k].p;
+            document.getElementById('netWorthDisplay').innerText = `$${totalVal.toLocaleString(undefined, {maximumFractionDigits:2})}`;
+            document.getElementById('walletCashDisp').innerText = `Cash: $${sim.db.cash.toLocaleString()}`;
         },
         renderWallet() {
-            const list = document.getElementById('walletList');
+            let list = document.getElementById('walletList');
             list.innerHTML = "";
-            for(let s in sim.stocks) {
-                const stk = sim.stocks[s];
-                const owned = sim.data.portfolio[s];
-                list.innerHTML += `
-                    <div class="market-card" onclick="sim.changeStock('${s}'); ui.switchView('market')">
-                        <div>
-                            <h3 style="font-weight:900; color:var(--accent)">${s}</h3>
-                            <p style="font-size:12px; color:var(--dim)">${owned} Shares Owned</p>
-                        </div>
-                        <div style="text-align:right">
-                            <div style="font-weight:900; font-size:18px;">$${stk.p.toLocaleString(undefined, {minimumFractionDigits: stk.precision})}</div>
-                            <div style="font-size:11px; color:var(--up)">View Chart</div>
-                        </div>
-                    </div>
-                `;
+            for(let k in sim.stocks) {
+                let shares = sim.db.portfolio[k] || 0;
+                if(shares <= 0) continue;
+                list.innerHTML += `<div class="asset-row"><div><b>${k}</b><br><small>${shares} Shares</small></div><div>$${(shares * sim.stocks[k].p).toLocaleString()}</div></div>`;
             }
         },
-        resetAll() { localStorage.clear(); location.reload(); }
+        reset() { localStorage.clear(); location.reload(); }
     };
     window.onload = () => sim.init();
 </script>
