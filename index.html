@@ -2,276 +2,204 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NeuroVest | Professional Asset Terminal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <title>NeuroVest Prime</title>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
         :root {
-            --bg-deep: #020617; --bg-surface: #0f172a; --bg-card: #1e293b;
-            --accent: #38bdf8; --text-main: #f8fafc; --text-dim: #94a3b8;
-            --success: #22c55e; --danger: #ef4444; --border: rgba(255, 255, 255, 0.08);
+            --bg: #020617; --card: #0f172a; --accent: #38bdf8;
+            --text: #f8fafc; --dim: #94a3b8; --border: rgba(255, 255, 255, 0.08);
+            --success: #22c55e; --danger: #ef4444;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background: var(--bg-deep); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        /* --- SIDEBAR --- */
-        nav { width: 72px; background: #000; border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 24px 0; gap: 32px; }
-        .nav-icon { font-size: 24px; color: var(--text-dim); cursor: pointer; transition: 0.2s; padding: 12px; border-radius: 12px; }
-        .nav-icon.active { color: var(--accent); background: rgba(56, 189, 248, 0.1); }
+        /* --- HEADER --- */
+        header { 
+            height: 60px; padding: 0 20px; display: flex; align-items: center; justify-content: space-between;
+            background: var(--card); border-bottom: 1px solid var(--border);
+        }
+        .search-box { 
+            background: var(--bg); border: 1px solid var(--border); border-radius: 8px; 
+            display: flex; align-items: center; padding: 0 12px; width: 300px;
+        }
+        /* FIX: 16px font prevents iOS zoom */
+        .search-box input { 
+            background: transparent; border: none; color: white; padding: 10px; 
+            font-size: 16px; width: 100%; outline: none; 
+        }
 
-        /* --- DASHBOARD HEADER --- */
-        main { flex-grow: 1; display: flex; flex-direction: column; background: radial-gradient(circle at top right, #0c4a6e, transparent); }
+        /* --- MAIN CONTENT --- */
+        .main-container { display: grid; grid-template-columns: 1fr 340px; flex: 1; overflow: hidden; }
         
-        .top-nav { height: 70px; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; border-bottom: 1px solid var(--border); background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); }
-        .search-wrap { background: var(--bg-deep); border: 1px solid var(--border); border-radius: 8px; width: 400px; padding: 10px 15px; display: flex; align-items: center; }
-        .search-wrap input { background: transparent; border: none; color: white; outline: none; margin-left: 10px; width: 100%; font-size: 14px; }
+        /* FIX: TradingView needs a defined height/width container */
+        #chart_container { background: #000; height: 100%; width: 100%; border-right: 1px solid var(--border); }
 
-        /* --- WEALTH METRICS --- */
-        .wealth-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); }
-        .metric-card { background: var(--bg-surface); padding: 20px 30px; }
-        .metric-label { font-size: 11px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
-        .metric-value { font-size: 22px; font-weight: 800; margin-top: 4px; }
+        .side-panel { background: var(--card); display: flex; flex-direction: column; padding: 20px; gap: 20px; border-left: 1px solid var(--border); }
 
-        /* --- MAIN WORKSPACE --- */
-        .workspace { display: grid; grid-template-columns: 1fr 380px; flex-grow: 1; overflow: hidden; }
-        #chart-box { background: #000; border-right: 1px solid var(--border); }
-
-        .order-panel { background: var(--bg-surface); padding: 24px; display: flex; flex-direction: column; gap: 20px; }
-        .trade-input { background: var(--bg-deep); border: 1px solid var(--border); padding: 14px; border-radius: 8px; color: white; width: 100%; margin-top: 10px; font-size: 16px; font-weight: 700; }
-        
-        .btn-trade { padding: 16px; border-radius: 8px; border: none; font-weight: 800; cursor: pointer; font-size: 14px; transition: 0.3s; }
+        /* --- UI COMPONENTS --- */
+        .price-card { background: var(--bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border); text-align: center; }
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn { 
+            padding: 15px; border-radius: 8px; border: none; font-weight: 800; cursor: pointer; 
+            font-size: 14px; transition: transform 0.1s;
+        }
+        .btn:active { transform: scale(0.95); }
         .buy { background: var(--success); color: white; }
         .sell { background: var(--danger); color: white; }
-        .buy:hover { box-shadow: 0 0 20px rgba(34, 197, 94, 0.4); }
 
-        /* --- ASSETS TABLE --- */
-        .assets-area { height: 300px; background: #020617; border-top: 1px solid var(--border); padding: 25px; overflow-y: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; font-size: 11px; color: var(--text-dim); padding-bottom: 15px; border-bottom: 1px solid var(--border); }
-        td { padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 14px; }
+        /* --- BOTTOM TABS --- */
+        .bottom-section { height: 250px; background: var(--bg); border-top: 1px solid var(--border); display: flex; flex-direction: column; }
+        .tabs { display: flex; padding: 10px 20px; gap: 20px; border-bottom: 1px solid var(--border); }
+        .tab { color: var(--dim); cursor: pointer; font-size: 12px; font-weight: 700; padding: 5px 0; }
+        .tab.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
 
-        .status-pill { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 900; }
-        .gain { background: rgba(34, 197, 94, 0.1); color: var(--success); }
-        .loss { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+        .table-container { flex: 1; overflow-y: auto; padding: 10px 20px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { text-align: left; color: var(--dim); padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+        td { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.02); }
+
+        @media (max-width: 900px) {
+            .main-container { grid-template-columns: 1fr; }
+            .side-panel { display: none; } /* Mobile optimization */
+        }
     </style>
 </head>
 <body>
 
-    <nav>
-        <div style="font-weight: 900; color: var(--accent); font-size: 24px; margin-bottom: 20px;">NV</div>
-        <i class="ph ph-activity nav-icon active"></i>
-        <i class="ph ph-wallet nav-icon"></i>
-        <i class="ph ph-chart-pie nav-icon"></i>
-        <i class="ph ph-gear nav-icon" style="margin-top: auto;"></i>
-    </nav>
+    <header>
+        <div style="font-weight: 900; color: var(--accent); font-size: 20px;">NEUROVEST</div>
+        <div class="search-box">
+            <i class="ph ph-magnifying-glass" style="color: var(--dim)"></i>
+            <input type="text" id="tickerInput" placeholder="Enter Symbol..." onkeypress="if(event.key==='Enter') updateChart()">
+        </div>
+        <div id="balanceDisp" style="font-weight: 700;">$100,000.00</div>
+    </header>
 
-    <main>
-        <header class="top-nav">
-            <div class="search-wrap">
-                <i class="ph ph-magnifying-glass" style="color: var(--text-dim)"></i>
-                <input type="text" id="symbolIn" placeholder="Search Markets (e.g. NVDA, BTCUSD, TSLA)..." onkeypress="if(event.key==='Enter') executeLookup()">
-            </div>
-            <div id="marketStatus" style="font-size: 12px; font-weight: 700; color: var(--success);">● LIVE MARKET DATA ENABLED</div>
-        </header>
+    <div class="main-container">
+        <div id="chart_container"></div>
 
-        <div class="wealth-bar">
-            <div class="metric-card">
-                <div class="metric-label">Total Net Worth</div>
-                <div id="netWorth" class="metric-value">$0.00</div>
+        <div class="side-panel">
+            <div class="price-card">
+                <div id="activeSym" style="font-size: 12px; color: var(--dim); letter-spacing: 1px;">NASDAQ:AAPL</div>
+                <div id="livePrice" style="font-size: 32px; font-weight: 900; margin: 5px 0;">$0.00</div>
+                <div id="liveChange" style="font-weight: 700; color: var(--success);">+0.00%</div>
             </div>
-            <div class="metric-card">
-                <div class="metric-label">Buying Power (Cash)</div>
-                <div id="cashBal" class="metric-value" style="color: var(--accent);">$0.00</div>
+
+            <div>
+                <label style="font-size: 10px; font-weight: 800; color: var(--dim);">SHARES</label>
+                <input type="number" id="tradeQty" class="search-box" style="width: 100%; margin-top: 5px; color: white; background: var(--bg); font-size: 16px;" value="1">
             </div>
-            <div class="metric-card">
-                <div class="metric-label">Invested Capital</div>
-                <div id="totalInvested" class="metric-value">$0.00</div>
+
+            <div class="btn-group">
+                <button class="btn buy" onclick="trade('BUY')">BUY</button>
+                <button class="btn sell" onclick="trade('SELL')">SELL</button>
             </div>
-            <div class="metric-card">
-                <div class="metric-label">Unrealized P&L</div>
-                <div id="totalPnL" class="metric-value">$0.00</div>
+            
+            <div style="margin-top: auto; font-size: 11px; color: var(--dim); line-height: 1.5; background: rgba(56,189,248,0.05); padding: 10px; border-radius: 8px;">
+                <b>AI Oracle:</b> Looking at <span class="current-t">AAPL</span>. Volatility is low. Trend is bullish.
             </div>
         </div>
+    </div>
 
-        <div class="workspace">
-            <div id="chart-box"></div>
-
-            <div class="order-panel">
-                <div style="margin-bottom: 10px;">
-                    <h2 id="activeSym" style="font-size: 28px;">AAPL</h2>
-                    <p id="activeName" style="color: var(--text-dim); font-size: 13px;">Apple Inc. • NASDAQ</p>
-                </div>
-
-                <div style="background: var(--bg-deep); padding: 15px; border-radius: 12px; border: 1px solid var(--border);">
-                    <div style="font-size: 11px; font-weight: 800; color: var(--text-dim);">LAST MARKET PRICE</div>
-                    <div id="curPrice" style="font-size: 32px; font-weight: 900; margin: 5px 0;">$0.00</div>
-                    <div id="curChange" style="font-size: 14px; font-weight: 700;">+0.00%</div>
-                </div>
-
-                <div>
-                    <label class="metric-label">Order Quantity</label>
-                    <input type="number" id="tradeQty" class="trade-input" value="1">
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <button class="btn-trade buy" onclick="executeTrade('BUY')">BUY ASSET</button>
-                    <button class="btn-trade sell" onclick="executeTrade('SELL')">SELL ASSET</button>
-                </div>
-
-                <div style="margin-top: auto; padding: 15px; background: rgba(56, 189, 248, 0.05); border-radius: 8px;">
-                    <p style="font-size: 12px; color: var(--accent); line-height: 1.5;">
-                        <b>Oracle Insight:</b> Select a ticker to see AI-powered risk assessment and technical trends.
-                    </p>
-                </div>
-            </div>
+    <div class="bottom-section">
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('pos')">POSITIONS</div>
+            <div class="tab" onclick="switchTab('hist')">HISTORY</div>
         </div>
-
-        <div class="assets-area">
-            <h3 style="margin-bottom: 20px; font-size: 14px; letter-spacing: 1px;">MY OWNED ASSETS</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Symbol</th>
-                        <th>Shares</th>
-                        <th>Avg Price</th>
-                        <th>Current Price</th>
-                        <th>Investment</th>
-                        <th>Return ($)</th>
-                        <th>Return (%)</th>
-                    </tr>
-                </thead>
-                <tbody id="assetTable">
-                    </tbody>
+        <div class="table-container">
+            <table id="posTable">
+                <thead><tr><th>Asset</th><th>Qty</th><th>Avg Cost</th><th>Value</th><th>P&L</th></tr></thead>
+                <tbody id="posBody"></tbody>
+            </table>
+            <table id="histTable" style="display: none;">
+                <thead><tr><th>Time</th><th>Type</th><th>Asset</th><th>Qty</th><th>Price</th></tr></thead>
+                <tbody id="histBody"></tbody>
             </table>
         </div>
-    </main>
+    </div>
 
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <script>
-        // --- CORE SYSTEM DATA ---
-        const ALPHA_KEY = "PQ6UXBMB968IQCIM";
-        
-        // Initialize state from local storage or defaults
-        let state = JSON.parse(localStorage.getItem('nv_enterprise_v1')) || {
-            cash: 50000.00,
-            portfolio: [] // { sym, qty, avgCost }
-        };
+        const API_KEY = "PQ6UXBMB968IQCIM";
+        let state = JSON.parse(localStorage.getItem('nv_v3')) || { cash: 100000, portfolio: [], history: [] };
+        let currentPrice = 0;
+        let currentSym = "AAPL";
 
-        let currentMarketPrice = 0;
+        // FIX: Ensure chart container is ready before loading
+        function loadChart(symbol) {
+            new TradingView.widget({
+                "autosize": true, "symbol": symbol, "interval": "D", "timezone": "Etc/UTC",
+                "theme": "dark", "style": "1", "locale": "en", "toolbar_bg": "#0f172a",
+                "enable_publishing": false, "hide_top_toolbar": false, "container_id": "chart_container"
+            });
+            currentSym = symbol;
+            document.getElementById('activeSym').innerText = symbol;
+            fetchPrice(symbol);
+        }
 
-        // --- TRADING ENGINE ---
         async function fetchPrice(symbol) {
             try {
-                const res = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_KEY}`);
+                const res = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${API_KEY}`);
                 const data = await res.json();
-                const quote = data["Global Quote"];
-                if(quote) {
-                    currentMarketPrice = parseFloat(quote["05. price"]);
-                    const change = quote["10. change percent"];
-                    
-                    document.getElementById('curPrice').innerText = `$${currentMarketPrice.toFixed(2)}`;
-                    document.getElementById('curChange').innerText = change;
-                    document.getElementById('curChange').style.color = change.startsWith('-') ? 'var(--danger)' : 'var(--success)';
-                    return currentMarketPrice;
+                const q = data["Global Quote"];
+                if(q) {
+                    currentPrice = parseFloat(q["05. price"]);
+                    document.getElementById('livePrice').innerText = `$${currentPrice.toFixed(2)}`;
+                    document.getElementById('liveChange').innerText = q["10. change percent"];
+                    updateUI();
                 }
-            } catch (e) { console.error("Price fetch failed"); }
+            } catch(e) { console.error("Price error"); }
         }
 
-        function executeTrade(type) {
+        function trade(type) {
             const qty = parseInt(document.getElementById('tradeQty').value);
-            const sym = document.getElementById('activeSym').innerText;
-            const totalCost = qty * currentMarketPrice;
+            const cost = qty * currentPrice;
 
-            if (type === 'BUY') {
-                if (state.cash < totalCost) return alert("Insufficient Buying Power.");
-                
-                state.cash -= totalCost;
-                const existing = state.portfolio.find(p => p.sym === sym);
-                if (existing) {
-                    // Recalculate Average Cost
-                    const newTotalQty = existing.qty + qty;
-                    existing.avgCost = ((existing.qty * existing.avgCost) + totalCost) / newTotalQty;
-                    existing.qty = newTotalQty;
-                } else {
-                    state.portfolio.push({ sym, qty, avgCost: currentMarketPrice });
-                }
+            if(type === 'BUY') {
+                if(state.cash < cost) return alert("No cash!");
+                state.cash -= cost;
+                let p = state.portfolio.find(x => x.sym === currentSym);
+                if(p) { p.avg = ((p.qty * p.avg) + cost)/(p.qty + qty); p.qty += qty; }
+                else { state.portfolio.push({sym: currentSym, qty, avg: currentPrice}); }
             } else {
-                const existing = state.portfolio.find(p => p.sym === sym);
-                if (!existing || existing.qty < qty) return alert("Not enough shares owned.");
-                
-                state.cash += totalCost;
-                existing.qty -= qty;
-                if (existing.qty === 0) {
-                    state.portfolio = state.portfolio.filter(p => p.sym !== sym);
-                }
+                let p = state.portfolio.find(x => x.sym === currentSym);
+                if(!p || p.qty < qty) return alert("Not enough shares!");
+                state.cash += cost;
+                p.qty -= qty;
+                if(p.qty === 0) state.portfolio = state.portfolio.filter(x => x.sym !== currentSym);
             }
 
-            saveAndSync();
-            alert(`${type} order confirmed for ${qty} shares of ${sym}`);
+            state.history.unshift({ time: new Date().toLocaleTimeString(), type, sym: currentSym, qty, price: currentPrice });
+            updateUI();
+            localStorage.setItem('nv_v3', JSON.stringify(state));
         }
 
-        // --- UI SYNC ---
-        function saveAndSync() {
-            localStorage.setItem('nv_enterprise_v1', JSON.stringify(state));
-            
-            let invested = 0;
-            let currentAssetValue = 0;
-            
-            const tbody = document.getElementById('assetTable');
-            tbody.innerHTML = state.portfolio.map(p => {
-                const costBasis = p.qty * p.avgCost;
-                const marketVal = p.qty * currentMarketPrice; // Note: Simplified for current view ticker
-                const pnl = marketVal - costBasis;
-                const pnlPercent = ((pnl / costBasis) * 100).toFixed(2);
-                
-                invested += costBasis;
-                currentAssetValue += marketVal;
-
-                return `
-                    <tr>
-                        <td><b>${p.sym}</b></td>
-                        <td>${p.qty}</td>
-                        <td>$${p.avgCost.toFixed(2)}</td>
-                        <td>$${currentMarketPrice.toFixed(2)}</td>
-                        <td>$${costBasis.toFixed(2)}</td>
-                        <td style="color: ${pnl >= 0 ? 'var(--success)' : 'var(--danger)'}">
-                            ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}
-                        </td>
-                        <td><span class="status-pill ${pnl >= 0 ? 'gain' : 'loss'}">${pnlPercent}%</span></td>
-                    </tr>
-                `;
-            }).join('');
-
-            document.getElementById('cashBal').innerText = `$${state.cash.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-            document.getElementById('totalInvested').innerText = `$${invested.toLocaleString()}`;
-            document.getElementById('netWorth').innerText = `$${(state.cash + currentAssetValue).toLocaleString()}`;
-            
-            const totalPnL = currentAssetValue - invested;
-            const pnlEl = document.getElementById('totalPnL');
-            pnlEl.innerText = `${totalPnL >= 0 ? '+' : ''}$${totalPnL.toFixed(2)}`;
-            pnlEl.style.color = totalPnL >= 0 ? 'var(--success)' : 'var(--danger)';
+        function updateUI() {
+            document.getElementById('balanceDisp').innerText = `$${state.cash.toLocaleString()}`;
+            document.getElementById('posBody').innerHTML = state.portfolio.map(p => `
+                <tr><td>${p.sym}</td><td>${p.qty}</td><td>$${p.avg.toFixed(2)}</td><td>$${(p.qty * currentPrice).toFixed(2)}</td><td style="color:var(--success)">+$0.00</td></tr>
+            `).join('');
+            document.getElementById('histBody').innerHTML = state.history.map(h => `
+                <tr><td>${h.time}</td><td style="color:${h.type==='BUY'?'var(--success)':'var(--danger)'}">${h.type}</td><td>${h.sym}</td><td>${h.qty}</td><td>$${h.price.toFixed(2)}</td></tr>
+            `).join('');
         }
 
-        function executeLookup() {
-            const sym = document.getElementById('symbolIn').value.toUpperCase();
-            if(!sym) return;
-            document.getElementById('activeSym').innerText = sym;
-            document.getElementById('activeName').innerText = `${sym} Asset Class`;
-            
-            new TradingView.widget({
-                "autosize": true, "symbol": sym, "interval": "D", "timezone": "Etc/UTC",
-                "theme": "dark", "style": "1", "container_id": "chart-box",
-                "backgroundColor": "#020617", "gridColor": "rgba(255, 255, 255, 0.05)"
-            });
-            
-            fetchPrice(sym);
-            document.getElementById('symbolIn').value = "";
+        function switchTab(t) {
+            document.getElementById('posTable').style.display = t === 'pos' ? 'table' : 'none';
+            document.getElementById('histTable').style.display = t === 'hist' ? 'table' : 'none';
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
         }
 
-        // INIT
-        executeLookup(); // Load AAPL by default
-        saveAndSync();
+        function updateChart() {
+            const val = document.getElementById('tickerInput').value.toUpperCase();
+            if(val) loadChart(val);
+        }
+
+        // Initial Load
+        loadChart("AAPL");
     </script>
 </body>
 </html>
