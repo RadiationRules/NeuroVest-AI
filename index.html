@@ -3,203 +3,262 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-    <title>NeuroVest Prime</title>
+    <title>NeuroVest | Sovereign Terminal</title>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <style>
         :root {
-            --bg: #020617; --card: #0f172a; --accent: #38bdf8;
-            --text: #f8fafc; --dim: #94a3b8; --border: rgba(255, 255, 255, 0.08);
-            --success: #22c55e; --danger: #ef4444;
+            --bg: #030303; --panel: #0A0A0A; --card: #121212;
+            --accent: #32D74B; --text: #FFFFFF; --dim: #8E8E93;
+            --border: rgba(255,255,255,0.06); --danger: #FF453A;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', -apple-system, sans-serif; }
+        body { background: var(--bg); color: var(--text); height: 100dvh; overflow: hidden; }
 
-        /* --- HEADER --- */
-        header { 
-            height: 60px; padding: 0 20px; display: flex; align-items: center; justify-content: space-between;
-            background: var(--card); border-bottom: 1px solid var(--border);
-        }
-        .search-box { 
-            background: var(--bg); border: 1px solid var(--border); border-radius: 8px; 
-            display: flex; align-items: center; padding: 0 12px; width: 300px;
-        }
-        /* FIX: 16px font prevents iOS zoom */
-        .search-box input { 
-            background: transparent; border: none; color: white; padding: 10px; 
-            font-size: 16px; width: 100%; outline: none; 
-        }
+        /* MOBILE ZOOM FIX: Inputs MUST be 16px */
+        input, select, textarea { font-size: 16px !important; }
 
-        /* --- MAIN CONTENT --- */
-        .main-container { display: grid; grid-template-columns: 1fr 340px; flex: 1; overflow: hidden; }
+        #app { display: flex; height: 100vh; width: 100vw; }
+
+        /* NAVIGATION BAR */
+        .sidebar { width: 72px; background: #000; border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 25px 0; z-index: 100; }
+        .nav-item { width: 44px; height: 44px; border-radius: 12px; color: var(--dim); display: flex; align-items: center; justify-content: center; cursor: pointer; margin-bottom: 15px; transition: all 0.2s; font-size: 22px; }
+        .nav-item:hover { color: #fff; background: var(--card); }
+        .nav-item.active { background: var(--accent); color: #000; box-shadow: 0 0 20px rgba(50, 215, 75, 0.2); }
+
+        /* MAIN CONTENT */
+        .main { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
         
-        /* FIX: TradingView needs a defined height/width container */
-        #chart_container { background: #000; height: 100%; width: 100%; border-right: 1px solid var(--border); }
+        header { height: 64px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: var(--panel); }
+        .search-box { background: var(--card); border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; gap: 10px; width: 320px; border: 1px solid var(--border); }
+        .search-box input { background: transparent; border: none; color: #fff; width: 100%; outline: none; }
 
-        .side-panel { background: var(--card); display: flex; flex-direction: column; padding: 20px; gap: 20px; border-left: 1px solid var(--border); }
+        /* VIEW PANES */
+        .view { display: none; flex: 1; padding: 24px; overflow-y: auto; height: calc(100vh - 64px); }
+        .view.active { display: flex; flex-direction: column; }
 
-        /* --- UI COMPONENTS --- */
-        .price-card { background: var(--bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border); text-align: center; }
-        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn { 
-            padding: 15px; border-radius: 8px; border: none; font-weight: 800; cursor: pointer; 
-            font-size: 14px; transition: transform 0.1s;
-        }
-        .btn:active { transform: scale(0.95); }
-        .buy { background: var(--success); color: white; }
-        .sell { background: var(--danger); color: white; }
+        /* TRADING VIEW SPECIFIC */
+        #view-market { padding: 0; flex-direction: row; }
+        .chart-container { flex: 1; padding: 15px; display: flex; flex-direction: column; height: 100%; }
+        #tv_chart_mount { flex: 1; background: #000; border-radius: 16px; border: 1px solid var(--border); overflow: hidden; }
+        
+        .market-side { width: 340px; background: var(--panel); border-left: 1px solid var(--border); padding: 24px; display: flex; flex-direction: column; }
+        .price-hero { font-size: 48px; font-weight: 800; letter-spacing: -2px; margin: 10px 0; line-height: 1; }
 
-        /* --- BOTTOM TABS --- */
-        .bottom-section { height: 250px; background: var(--bg); border-top: 1px solid var(--border); display: flex; flex-direction: column; }
-        .tabs { display: flex; padding: 10px 20px; gap: 20px; border-bottom: 1px solid var(--border); }
-        .tab { color: var(--dim); cursor: pointer; font-size: 12px; font-weight: 700; padding: 5px 0; }
-        .tab.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
+        /* COMMAND CENTER (PROFILE + SETTINGS) */
+        .command-grid { display: grid; grid-template-columns: 300px 1fr; gap: 30px; max-width: 1000px; margin: 0 auto; width: 100%; }
+        .profile-card { background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 30px; text-align: center; }
+        .avatar-upload { width: 120px; height: 120px; border-radius: 50%; border: 2px dashed var(--dim); margin: 0 auto 20px; position: relative; cursor: pointer; overflow: hidden; }
+        .avatar-upload img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-upload:hover { border-color: var(--accent); }
+        .avatar-hint { position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; opacity: 0; transition: 0.2s; font-size: 12px; }
+        .avatar-upload:hover .avatar-hint { opacity: 1; }
 
-        .table-container { flex: 1; overflow-y: auto; padding: 10px 20px; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { text-align: left; color: var(--dim); padding-bottom: 10px; border-bottom: 1px solid var(--border); }
-        td { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.02); }
+        .settings-form { background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 30px; }
+        .field { margin-bottom: 20px; }
+        .field label { display: block; font-size: 11px; font-weight: 700; color: var(--dim); margin-bottom: 8px; text-transform: uppercase; }
+        .field input { width: 100%; background: var(--bg); border: 1px solid var(--border); padding: 12px; border-radius: 10px; color: #fff; }
 
-        @media (max-width: 900px) {
-            .main-container { grid-template-columns: 1fr; }
-            .side-panel { display: none; } /* Mobile optimization */
+        .btn { padding: 14px 24px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; width: 100%; }
+        .btn-primary { background: var(--accent); color: #000; }
+        .btn-dark { background: var(--card); color: #fff; border: 1px solid var(--border); }
+
+        /* MOBILE UI */
+        @media (max-width: 800px) {
+            #app { flex-direction: column-reverse; }
+            .sidebar { width: 100%; height: 65px; flex-direction: row; padding: 0; justify-content: space-around; border-top: 1px solid var(--border); border-right: none; }
+            #view-market { flex-direction: column; }
+            .market-side { width: 100%; border-left: none; border-top: 1px solid var(--border); height: auto; }
+            .command-grid { grid-template-columns: 1fr; }
+            .search-box { width: 140px; }
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <div style="font-weight: 900; color: var(--accent); font-size: 20px;">NEUROVEST</div>
-        <div class="search-box">
-            <i class="ph ph-magnifying-glass" style="color: var(--dim)"></i>
-            <input type="text" id="tickerInput" placeholder="Enter Symbol..." onkeypress="if(event.key==='Enter') updateChart()">
-        </div>
-        <div id="balanceDisp" style="font-weight: 700;">$100,000.00</div>
-    </header>
+<div id="app">
+    <nav class="sidebar">
+        <div class="nav-item active" onclick="term.show('market', this)"><i class="ph-bold ph-chart-line-up"></i></div>
+        <div class="nav-item" onclick="term.show('command', this)"><i class="ph-bold ph-user-gear"></i></div>
+        <div class="nav-item" onclick="term.show('vault', this)"><i class="ph-bold ph-wallet"></i></div>
+    </nav>
 
-    <div class="main-container">
-        <div id="chart_container"></div>
-
-        <div class="side-panel">
-            <div class="price-card">
-                <div id="activeSym" style="font-size: 12px; color: var(--dim); letter-spacing: 1px;">NASDAQ:AAPL</div>
-                <div id="livePrice" style="font-size: 32px; font-weight: 900; margin: 5px 0;">$0.00</div>
-                <div id="liveChange" style="font-weight: 700; color: var(--success);">+0.00%</div>
+    <main class="main">
+        <header>
+            <div class="search-box">
+                <i class="ph ph-magnifying-glass" style="color:var(--dim)"></i>
+                <input type="text" id="findTicker" placeholder="Symbol..." oninput="term.search(this.value)">
             </div>
-
-            <div>
-                <label style="font-size: 10px; font-weight: 800; color: var(--dim);">SHARES</label>
-                <input type="number" id="tradeQty" class="search-box" style="width: 100%; margin-top: 5px; color: white; background: var(--bg); font-size: 16px;" value="1">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="text-align: right;">
+                    <div id="balance" style="font-weight: 800; color: var(--accent);">$100,000.00</div>
+                    <div style="font-size: 9px; color: var(--dim); font-weight: 800;">TOTAL EQUITY</div>
+                </div>
+                <img id="userAvatarSmall" src="https://api.dicebear.com/7.x/identicon/svg?seed=Admin" style="width: 32px; height: 32px; border-radius: 8px; background: var(--card);">
             </div>
+        </header>
 
-            <div class="btn-group">
-                <button class="btn buy" onclick="trade('BUY')">BUY</button>
-                <button class="btn sell" onclick="trade('SELL')">SELL</button>
+        <section id="view-market" class="view active">
+            <div class="chart-container">
+                <div id="tv_chart_mount"></div>
             </div>
-            
-            <div style="margin-top: auto; font-size: 11px; color: var(--dim); line-height: 1.5; background: rgba(56,189,248,0.05); padding: 10px; border-radius: 8px;">
-                <b>AI Oracle:</b> Looking at <span class="current-t">AAPL</span>. Volatility is low. Trend is bullish.
+            <aside class="market-side">
+                <div id="curSym" style="font-weight: 800; color: var(--dim); font-size: 12px;">NASDAQ: NVDA</div>
+                <div id="curPrice" class="price-hero">$0.00</div>
+                <div id="curChg" style="font-weight: 700; margin-bottom: 30px;">0.00%</div>
+                
+                <div style="background: var(--card); padding: 20px; border-radius: 16px; border: 1px solid var(--border); margin-top: auto;">
+                    <label style="font-size: 10px; font-weight: 800; color: var(--dim);">ORDER SIZE</label>
+                    <input type="number" id="tradeQty" value="1" style="width: 100%; background: transparent; border: none; color: #fff; font-size: 32px; font-weight: 800; outline: none; margin-bottom: 20px;">
+                    <button class="btn btn-primary" onclick="term.execute()">PLACE BUY ORDER</button>
+                </div>
+            </aside>
+        </section>
+
+        <section id="view-command" class="view">
+            <div class="command-grid">
+                <div class="profile-card">
+                    <div class="avatar-upload" onclick="document.getElementById('imgInput').click()">
+                        <img id="p-img" src="https://api.dicebear.com/7.x/identicon/svg?seed=Admin">
+                        <div class="avatar-hint">UPLOAD</div>
+                    </div>
+                    <input type="file" id="imgInput" hidden accept="image/*" onchange="term.handleImg(this)">
+                    <h2 id="p-name-display">Trader Alpha</h2>
+                    <p style="color: var(--dim); font-size: 13px; margin-top: 5px;">Level: Institutional</p>
+                    <div style="margin-top: 25px; border-top: 1px solid var(--border); padding-top: 20px;">
+                        <div style="font-size: 11px; color: var(--dim);">PORTFOLIO VALUE</div>
+                        <div style="font-size: 24px; font-weight: 800;">$142,509.12</div>
+                    </div>
+                </div>
+
+                <div class="settings-form">
+                    <h3 style="margin-bottom: 25px;">Account Settings</h3>
+                    <div class="field">
+                        <label>Public Display Name</label>
+                        <input type="text" id="set-name" placeholder="Trader Name">
+                    </div>
+                    <div class="field">
+                        <label>Trading Currency</label>
+                        <select style="width:100%; background:var(--bg); border:1px solid var(--border); color:#fff; padding:12px; border-radius:10px;">
+                            <option>USD - US Dollar</option>
+                            <option>EUR - Euro</option>
+                            <option>BTC - Bitcoin</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="term.save()">SAVE CHANGES</button>
+                </div>
             </div>
-        </div>
-    </div>
+        </section>
 
-    <div class="bottom-section">
-        <div class="tabs">
-            <div class="tab active" onclick="switchTab('pos')">POSITIONS</div>
-            <div class="tab" onclick="switchTab('hist')">HISTORY</div>
-        </div>
-        <div class="table-container">
-            <table id="posTable">
-                <thead><tr><th>Asset</th><th>Qty</th><th>Avg Cost</th><th>Value</th><th>P&L</th></tr></thead>
-                <tbody id="posBody"></tbody>
-            </table>
-            <table id="histTable" style="display: none;">
-                <thead><tr><th>Time</th><th>Type</th><th>Asset</th><th>Qty</th><th>Price</th></tr></thead>
-                <tbody id="histBody"></tbody>
-            </table>
-        </div>
-    </div>
+        <section id="view-vault" class="view">
+            <h2>Your Holdings</h2>
+            <div id="vaultList" style="margin-top: 20px; display: grid; gap: 15px;"></div>
+        </section>
+    </main>
+</div>
 
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-    <script>
-        const API_KEY = "PQ6UXBMB968IQCIM";
-        let state = JSON.parse(localStorage.getItem('nv_v3')) || { cash: 100000, portfolio: [], history: [] };
-        let currentPrice = 0;
-        let currentSym = "AAPL";
+<script>
+    const API_KEY = "PQ6UXBMB968IQCIM";
 
-        // FIX: Ensure chart container is ready before loading
-        function loadChart(symbol) {
-            new TradingView.widget({
-                "autosize": true, "symbol": symbol, "interval": "D", "timezone": "Etc/UTC",
-                "theme": "dark", "style": "1", "locale": "en", "toolbar_bg": "#0f172a",
-                "enable_publishing": false, "hide_top_toolbar": false, "container_id": "chart_container"
-            });
-            currentSym = symbol;
-            document.getElementById('activeSym').innerText = symbol;
-            fetchPrice(symbol);
-        }
+    const term = {
+        db: JSON.parse(localStorage.getItem('nv17_db')) || { 
+            cash: 100000, items: [], active: 'NVDA', name: 'Trader Alpha', 
+            img: 'https://api.dicebear.com/7.x/identicon/svg?seed=Admin' 
+        },
+        price: 0,
 
-        async function fetchPrice(symbol) {
+        init() {
+            this.sync();
+            this.fetch();
+        },
+
+        async fetch() {
             try {
-                const res = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${API_KEY}`);
-                const data = await res.json();
-                const q = data["Global Quote"];
+                const r = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${this.db.active}&apikey=${API_KEY}`);
+                const d = await r.json();
+                const q = d["Global Quote"];
                 if(q) {
-                    currentPrice = parseFloat(q["05. price"]);
-                    document.getElementById('livePrice').innerText = `$${currentPrice.toFixed(2)}`;
-                    document.getElementById('liveChange').innerText = q["10. change percent"];
-                    updateUI();
+                    this.price = parseFloat(q["05. price"]);
+                    const chg = parseFloat(q["10. change percent"]);
+                    document.getElementById('curPrice').innerText = `$${this.price.toFixed(2)}`;
+                    document.getElementById('curChg').innerText = (chg>=0?'+':'') + chg.toFixed(2) + '%';
+                    document.getElementById('curChg').style.color = chg >= 0 ? '#32D74B' : '#FF453A';
+                    document.getElementById('curSym').innerText = `ASSET: ${this.db.active}`;
+                    this.renderChart(chg >= 0 ? 'dark' : 'dark');
                 }
-            } catch(e) { console.error("Price error"); }
-        }
+            } catch(e) { console.warn("API Busy"); this.renderChart(); }
+        },
 
-        function trade(type) {
-            const qty = parseInt(document.getElementById('tradeQty').value);
-            const cost = qty * currentPrice;
+        renderChart() {
+            const mount = document.getElementById('tv_chart_mount');
+            mount.innerHTML = "";
+            // SUCCESS-WAIT logic: Ensure container is ready
+            setTimeout(() => {
+                new TradingView.widget({
+                    "autosize": true, "symbol": this.db.active, "interval": "D",
+                    "timezone": "Etc/UTC", "theme": "dark", "style": "3",
+                    "container_id": "tv_chart_mount", "hide_top_toolbar": true,
+                    "hide_legend": true, "save_image": false, "backgroundColor": "#030303",
+                    "gridColor": "rgba(255,255,255,0.03)"
+                });
+            }, 300);
+        },
 
-            if(type === 'BUY') {
-                if(state.cash < cost) return alert("No cash!");
-                state.cash -= cost;
-                let p = state.portfolio.find(x => x.sym === currentSym);
-                if(p) { p.avg = ((p.qty * p.avg) + cost)/(p.qty + qty); p.qty += qty; }
-                else { state.portfolio.push({sym: currentSym, qty, avg: currentPrice}); }
-            } else {
-                let p = state.portfolio.find(x => x.sym === currentSym);
-                if(!p || p.qty < qty) return alert("Not enough shares!");
-                state.cash += cost;
-                p.qty -= qty;
-                if(p.qty === 0) state.portfolio = state.portfolio.filter(x => x.sym !== currentSym);
+        show(id, el) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(`view-${id}`).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            el.classList.add('active');
+            if(id === 'market') this.renderChart();
+        },
+
+        handleImg(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.db.img = e.target.result;
+                    this.sync();
+                };
+                reader.readAsDataURL(input.files[0]);
             }
+        },
 
-            state.history.unshift({ time: new Date().toLocaleTimeString(), type, sym: currentSym, qty, price: currentPrice });
-            updateUI();
-            localStorage.setItem('nv_v3', JSON.stringify(state));
+        save() {
+            this.db.name = document.getElementById('set-name').value || this.db.name;
+            this.sync();
+            alert("Profile Updated");
+        },
+
+        execute() {
+            const qty = parseInt(document.getElementById('tradeQty').value);
+            const cost = qty * this.price;
+            if(this.db.cash >= cost) {
+                this.db.cash -= cost;
+                let h = this.db.items.find(x => x.s === this.db.active);
+                if(h) h.q += qty; else this.db.items.push({s: this.db.active, q: qty});
+                this.sync();
+                alert("Order Filled");
+            }
+        },
+
+        sync() {
+            localStorage.setItem('nv17_db', JSON.stringify(this.db));
+            document.getElementById('balance').innerText = `$${this.db.cash.toLocaleString()}`;
+            document.getElementById('p-name-display').innerText = this.db.name;
+            document.getElementById('set-name').value = this.db.name;
+            document.getElementById('p-img').src = this.db.img;
+            document.getElementById('userAvatarSmall').src = this.db.img;
+            
+            document.getElementById('vaultList').innerHTML = this.db.items.map(i => `
+                <div style="background:var(--panel); padding:20px; border-radius:12px; display:flex; justify-content:space-between; border:1px solid var(--border)">
+                    <strong>${i.s}</strong> <span>${i.q} Units</span>
+                </div>
+            `).join('') || '<p style="color:var(--dim)">No assets found.</p>';
         }
+    };
 
-        function updateUI() {
-            document.getElementById('balanceDisp').innerText = `$${state.cash.toLocaleString()}`;
-            document.getElementById('posBody').innerHTML = state.portfolio.map(p => `
-                <tr><td>${p.sym}</td><td>${p.qty}</td><td>$${p.avg.toFixed(2)}</td><td>$${(p.qty * currentPrice).toFixed(2)}</td><td style="color:var(--success)">+$0.00</td></tr>
-            `).join('');
-            document.getElementById('histBody').innerHTML = state.history.map(h => `
-                <tr><td>${h.time}</td><td style="color:${h.type==='BUY'?'var(--success)':'var(--danger)'}">${h.type}</td><td>${h.sym}</td><td>${h.qty}</td><td>$${h.price.toFixed(2)}</td></tr>
-            `).join('');
-        }
-
-        function switchTab(t) {
-            document.getElementById('posTable').style.display = t === 'pos' ? 'table' : 'none';
-            document.getElementById('histTable').style.display = t === 'hist' ? 'table' : 'none';
-            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-            event.target.classList.add('active');
-        }
-
-        function updateChart() {
-            const val = document.getElementById('tickerInput').value.toUpperCase();
-            if(val) loadChart(val);
-        }
-
-        // Initial Load
-        loadChart("AAPL");
-    </script>
+    window.onload = () => term.init();
+</script>
 </body>
 </html>
