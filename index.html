@@ -3,262 +3,300 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-    <title>NeuroVest | Sovereign Terminal</title>
+    <title>NeuroVest // Kinetic Pro V8</title>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <style>
         :root {
-            --bg: #030303; --panel: #0A0A0A; --card: #121212;
-            --accent: #32D74B; --text: #FFFFFF; --dim: #8E8E93;
-            --border: rgba(255,255,255,0.06); --danger: #FF453A;
+            --bg: #0b0e11; --panel: #15191e; --card: #1e2329;
+            --accent: #00ffcc; --up: #00ff88; --down: #ff3366;
+            --text: #ffffff; --dim: #848e9c; --border: rgba(255,255,255,0.08);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', -apple-system, sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         body { background: var(--bg); color: var(--text); height: 100dvh; overflow: hidden; }
 
-        /* MOBILE ZOOM FIX: Inputs MUST be 16px */
-        input, select, textarea { font-size: 16px !important; }
+        #app { display: grid; grid-template-columns: 75px 1fr 340px; height: 100vh; width: 100vw; }
 
-        #app { display: flex; height: 100vh; width: 100vw; }
+        /* SIDEBAR */
+        .sidebar { background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 25px 0; gap: 15px; z-index: 100; }
+        .nav-item { width: 50px; height: 50px; border-radius: 14px; color: var(--dim); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); font-size: 24px; }
+        .nav-item:hover { color: #fff; transform: translateY(-2px); }
+        .nav-item.active { background: var(--accent); color: #000; box-shadow: 0 10px 20px rgba(0, 255, 204, 0.3); }
 
-        /* NAVIGATION BAR */
-        .sidebar { width: 72px; background: #000; border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 25px 0; z-index: 100; }
-        .nav-item { width: 44px; height: 44px; border-radius: 12px; color: var(--dim); display: flex; align-items: center; justify-content: center; cursor: pointer; margin-bottom: 15px; transition: all 0.2s; font-size: 22px; }
-        .nav-item:hover { color: #fff; background: var(--card); }
-        .nav-item.active { background: var(--accent); color: #000; box-shadow: 0 0 20px rgba(50, 215, 75, 0.2); }
+        /* VIEWS */
+        .view-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .view { display: none; flex-direction: column; height: 100%; width: 100%; }
+        .view.active { display: flex; }
 
-        /* MAIN CONTENT */
-        .main { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+        header { height: 75px; border-bottom: 1px solid var(--border); background: var(--panel); display: flex; align-items: center; justify-content: space-between; padding: 0 30px; }
+        .avatar { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--accent); object-fit: cover; }
+
+        /* CHART AREA */
+        .chart-area { flex: 1; position: relative; background: radial-gradient(circle at 50% 10%, #1e2329 0%, #0b0e11 100%); }
+        canvas { width: 100%; height: 100%; }
+
+        /* WALLET VIEW GRID */
+        .wallet-grid { padding: 30px; display: grid; gap: 15px; overflow-y: auto; }
+        .market-card { background: var(--card); padding: 20px; border-radius: 18px; border: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; align-items: center; transition: 0.2s; cursor: pointer; }
+        .market-card:hover { border-color: var(--accent); background: #252a32; }
+
+        /* ORDER PANEL (FIXED UI) */
+        .order-panel { background: var(--panel); border-left: 1px solid var(--border); padding: 30px; display: flex; flex-direction: column; gap: 15px; }
+        .price-hero { font-size: 40px; font-weight: 900; letter-spacing: -1.5px; margin-bottom: 10px; }
         
-        header { height: 64px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: var(--panel); }
-        .search-box { background: var(--card); border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; gap: 10px; width: 320px; border: 1px solid var(--border); }
-        .search-box input { background: transparent; border: none; color: #fff; width: 100%; outline: none; }
+        .btn-buy { background: var(--up); color: #000; border: none; padding: 20px; border-radius: 15px; font-weight: 900; cursor: pointer; font-size: 16px; box-shadow: 0 4px 15px rgba(0,255,136,0.2); }
+        .btn-sell { background: transparent; border: 2px solid var(--down); color: var(--down); padding: 18px; border-radius: 15px; font-weight: 900; cursor: pointer; }
+        .btn-buy:active, .btn-sell:active { transform: scale(0.96); }
 
-        /* VIEW PANES */
-        .view { display: none; flex: 1; padding: 24px; overflow-y: auto; height: calc(100vh - 64px); }
-        .view.active { display: flex; flex-direction: column; }
+        /* DYNAMIC STATS UNDER BUTTONS */
+        .live-stats-box { background: rgba(255,255,255,0.03); border-radius: 15px; padding: 18px; margin-top: 10px; border: 1px dashed var(--border); }
+        .stat-line { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .stat-line:last-child { margin-bottom: 0; }
+        .label { font-size: 11px; font-weight: 800; color: var(--dim); text-transform: uppercase; }
+        .value { font-size: 14px; font-weight: 900; }
 
-        /* TRADING VIEW SPECIFIC */
-        #view-market { padding: 0; flex-direction: row; }
-        .chart-container { flex: 1; padding: 15px; display: flex; flex-direction: column; height: 100%; }
-        #tv_chart_mount { flex: 1; background: #000; border-radius: 16px; border: 1px solid var(--border); overflow: hidden; }
-        
-        .market-side { width: 340px; background: var(--panel); border-left: 1px solid var(--border); padding: 24px; display: flex; flex-direction: column; }
-        .price-hero { font-size: 48px; font-weight: 800; letter-spacing: -2px; margin: 10px 0; line-height: 1; }
+        #settingsDrawer { position: fixed; top: 0; right: -420px; width: 400px; height: 100%; background: var(--panel); border-left: 1px solid var(--border); z-index: 2000; transition: 0.5s cubic-bezier(0.16, 1, 0.3, 1); padding: 50px 40px; }
+        #settingsDrawer.open { right: 0; box-shadow: -50px 0 100px rgba(0,0,0,0.6); }
 
-        /* COMMAND CENTER (PROFILE + SETTINGS) */
-        .command-grid { display: grid; grid-template-columns: 300px 1fr; gap: 30px; max-width: 1000px; margin: 0 auto; width: 100%; }
-        .profile-card { background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 30px; text-align: center; }
-        .avatar-upload { width: 120px; height: 120px; border-radius: 50%; border: 2px dashed var(--dim); margin: 0 auto 20px; position: relative; cursor: pointer; overflow: hidden; }
-        .avatar-upload img { width: 100%; height: 100%; object-fit: cover; }
-        .avatar-upload:hover { border-color: var(--accent); }
-        .avatar-hint { position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; opacity: 0; transition: 0.2s; font-size: 12px; }
-        .avatar-upload:hover .avatar-hint { opacity: 1; }
-
-        .settings-form { background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 30px; }
-        .field { margin-bottom: 20px; }
-        .field label { display: block; font-size: 11px; font-weight: 700; color: var(--dim); margin-bottom: 8px; text-transform: uppercase; }
-        .field input { width: 100%; background: var(--bg); border: 1px solid var(--border); padding: 12px; border-radius: 10px; color: #fff; }
-
-        .btn { padding: 14px 24px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; width: 100%; }
-        .btn-primary { background: var(--accent); color: #000; }
-        .btn-dark { background: var(--card); color: #fff; border: 1px solid var(--border); }
-
-        /* MOBILE UI */
-        @media (max-width: 800px) {
-            #app { flex-direction: column-reverse; }
-            .sidebar { width: 100%; height: 65px; flex-direction: row; padding: 0; justify-content: space-around; border-top: 1px solid var(--border); border-right: none; }
-            #view-market { flex-direction: column; }
-            .market-side { width: 100%; border-left: none; border-top: 1px solid var(--border); height: auto; }
-            .command-grid { grid-template-columns: 1fr; }
-            .search-box { width: 140px; }
-        }
+        .input-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px; color: #fff; width: 100%; outline: none; margin-top: 8px; font-size: 16px; }
     </style>
 </head>
 <body>
 
 <div id="app">
     <nav class="sidebar">
-        <div class="nav-item active" onclick="term.show('market', this)"><i class="ph-bold ph-chart-line-up"></i></div>
-        <div class="nav-item" onclick="term.show('command', this)"><i class="ph-bold ph-user-gear"></i></div>
-        <div class="nav-item" onclick="term.show('vault', this)"><i class="ph-bold ph-wallet"></i></div>
+        <div class="nav-item active" id="nav-m" onclick="ui.switchView('market')"><i class="ph-fill ph-chart-line-up"></i></div>
+        <div class="nav-item" id="nav-w" onclick="ui.switchView('wallet')"><i class="ph-fill ph-wallet"></i></div>
+        <div class="nav-item" onclick="ui.toggleSettings()"><i class="ph-fill ph-gear-six"></i></div>
     </nav>
 
-    <main class="main">
-        <header>
-            <div class="search-box">
-                <i class="ph ph-magnifying-glass" style="color:var(--dim)"></i>
-                <input type="text" id="findTicker" placeholder="Symbol..." oninput="term.search(this.value)">
-            </div>
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <div style="text-align: right;">
-                    <div id="balance" style="font-weight: 800; color: var(--accent);">$100,000.00</div>
-                    <div style="font-size: 9px; color: var(--dim); font-weight: 800;">TOTAL EQUITY</div>
+    <div class="view-container">
+        <div id="view-market" class="view active">
+            <header>
+                <div style="display:flex; align-items:center; gap:20px;">
+                    <select id="stockSelect" onchange="sim.changeStock(this.value)" style="background:none; border:none; color:#fff; font-size:24px; font-weight:900; outline:none; cursor:pointer;">
+                        <option value="JSDA">JSDA / Soda</option>
+                        <option value="TSLA">TSLA / Tesla</option>
+                        <option value="BRK.A">BRK.A / Berkshire</option>
+                        <option value="ODD">ODD / Oddity</option>
+                    </select>
                 </div>
-                <img id="userAvatarSmall" src="https://api.dicebear.com/7.x/identicon/svg?seed=Admin" style="width: 32px; height: 32px; border-radius: 8px; background: var(--card);">
-            </div>
-        </header>
-
-        <section id="view-market" class="view active">
-            <div class="chart-container">
-                <div id="tv_chart_mount"></div>
-            </div>
-            <aside class="market-side">
-                <div id="curSym" style="font-weight: 800; color: var(--dim); font-size: 12px;">NASDAQ: NVDA</div>
-                <div id="curPrice" class="price-hero">$0.00</div>
-                <div id="curChg" style="font-weight: 700; margin-bottom: 30px;">0.00%</div>
-                
-                <div style="background: var(--card); padding: 20px; border-radius: 16px; border: 1px solid var(--border); margin-top: auto;">
-                    <label style="font-size: 10px; font-weight: 800; color: var(--dim);">ORDER SIZE</label>
-                    <input type="number" id="tradeQty" value="1" style="width: 100%; background: transparent; border: none; color: #fff; font-size: 32px; font-weight: 800; outline: none; margin-bottom: 20px;">
-                    <button class="btn btn-primary" onclick="term.execute()">PLACE BUY ORDER</button>
+                <div class="user-trigger" onclick="ui.toggleSettings()" style="display:flex; align-items:center; gap:12px; cursor:pointer;">
+                    <span id="userNameDisp" style="font-size:13px; font-weight:800; letter-spacing:0.5px;">TRADER</span>
+                    <img id="userImgDisp" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" class="avatar">
                 </div>
-            </aside>
-        </section>
+            </header>
+            <div class="chart-area"><canvas id="mainChart"></canvas></div>
+        </div>
 
-        <section id="view-command" class="view">
-            <div class="command-grid">
-                <div class="profile-card">
-                    <div class="avatar-upload" onclick="document.getElementById('imgInput').click()">
-                        <img id="p-img" src="https://api.dicebear.com/7.x/identicon/svg?seed=Admin">
-                        <div class="avatar-hint">UPLOAD</div>
-                    </div>
-                    <input type="file" id="imgInput" hidden accept="image/*" onchange="term.handleImg(this)">
-                    <h2 id="p-name-display">Trader Alpha</h2>
-                    <p style="color: var(--dim); font-size: 13px; margin-top: 5px;">Level: Institutional</p>
-                    <div style="margin-top: 25px; border-top: 1px solid var(--border); padding-top: 20px;">
-                        <div style="font-size: 11px; color: var(--dim);">PORTFOLIO VALUE</div>
-                        <div style="font-size: 24px; font-weight: 800;">$142,509.12</div>
-                    </div>
-                </div>
+        <div id="view-wallet" class="view">
+            <header><h2>Market Overview</h2></header>
+            <div class="wallet-grid" id="walletList"></div>
+        </div>
+    </div>
 
-                <div class="settings-form">
-                    <h3 style="margin-bottom: 25px;">Account Settings</h3>
-                    <div class="field">
-                        <label>Public Display Name</label>
-                        <input type="text" id="set-name" placeholder="Trader Name">
-                    </div>
-                    <div class="field">
-                        <label>Trading Currency</label>
-                        <select style="width:100%; background:var(--bg); border:1px solid var(--border); color:#fff; padding:12px; border-radius:10px;">
-                            <option>USD - US Dollar</option>
-                            <option>EUR - Euro</option>
-                            <option>BTC - Bitcoin</option>
-                        </select>
-                    </div>
-                    <button class="btn btn-primary" onclick="term.save()">SAVE CHANGES</button>
-                </div>
+    <aside class="order-panel">
+        <div id="sidePrice" class="price-hero">$0.00</div>
+        
+        <div style="display:flex; flex-direction:column; gap:12px;">
+            <div class="input-wrap">
+                <label class="label">Amount of Shares</label>
+                <input type="number" id="qty" value="1" class="input-box">
             </div>
-        </section>
+            <button class="btn-buy" onclick="sim.trade('buy')">BUY ORDER</button>
+            <button class="btn-sell" onclick="sim.trade('sell')">SELL ORDER</button>
+        </div>
 
-        <section id="view-vault" class="view">
-            <h2>Your Holdings</h2>
-            <div id="vaultList" style="margin-top: 20px; display: grid; gap: 15px;"></div>
-        </section>
-    </main>
+        <div class="live-stats-box">
+            <div class="stat-line">
+                <span class="label">Cash Balance</span>
+                <span id="cashDisp" class="value" style="color:var(--accent)">$0.00</span>
+            </div>
+            <div class="stat-line">
+                <span class="label">Owned Shares</span>
+                <span id="unitsDisp" class="value">0</span>
+            </div>
+            <div class="stat-line">
+                <span class="label">Total PNL</span>
+                <span id="pnlDisp" class="value">$0.00</span>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<div id="settingsDrawer">
+    <i class="ph ph-x" onclick="ui.toggleSettings()" style="cursor:pointer; font-size:28px;"></i>
+    <h2 style="margin:40px 0 20px 0; font-weight:900; font-size:32px;">PROFILE</h2>
+    <label class="label">Trader Alias</label>
+    <input type="text" id="nameInput" class="input-box" oninput="ui.saveProfile()">
+    <label class="label" style="display:block; margin-top:25px;">Avatar Image</label>
+    <input type="file" id="avatarUpload" onchange="ui.handleAvatar(this)" style="margin-top:10px;">
+    <button onclick="ui.resetAll()" style="margin-top:60px; color:var(--down); background:none; border:none; cursor:pointer; font-weight:800;">WIPE TERMINAL DATA</button>
 </div>
 
 <script>
-    const API_KEY = "PQ6UXBMB968IQCIM";
-
-    const term = {
-        db: JSON.parse(localStorage.getItem('nv17_db')) || { 
-            cash: 100000, items: [], active: 'NVDA', name: 'Trader Alpha', 
-            img: 'https://api.dicebear.com/7.x/identicon/svg?seed=Admin' 
+    const sim = {
+        active: 'TSLA',
+        data: JSON.parse(localStorage.getItem('nv_v8')) || {
+            cash: 100000,
+            portfolio: { 'JSDA': 0, 'TSLA': 0, 'BRK.A': 0, 'ODD': 0 },
+            avgCosts: { 'JSDA': 0, 'TSLA': 0, 'BRK.A': 0, 'ODD': 0 },
+            name: "New Trader",
+            avatar: null
         },
-        price: 0,
+        stocks: {
+            'JSDA': { p: 0.45, vol: 0.012, hist: [], precision: 4 },
+            'TSLA': { p: 185.00, vol: 0.003, hist: [], precision: 2 },
+            'BRK.A': { p: 615000, vol: 0.0005, hist: [], precision: 0 },
+            'ODD': { p: 15.00, vol: 0.006, hist: [], precision: 2 }
+        },
 
         init() {
-            this.sync();
-            this.fetch();
-        },
-
-        async fetch() {
-            try {
-                const r = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${this.db.active}&apikey=${API_KEY}`);
-                const d = await r.json();
-                const q = d["Global Quote"];
-                if(q) {
-                    this.price = parseFloat(q["05. price"]);
-                    const chg = parseFloat(q["10. change percent"]);
-                    document.getElementById('curPrice').innerText = `$${this.price.toFixed(2)}`;
-                    document.getElementById('curChg').innerText = (chg>=0?'+':'') + chg.toFixed(2) + '%';
-                    document.getElementById('curChg').style.color = chg >= 0 ? '#32D74B' : '#FF453A';
-                    document.getElementById('curSym').innerText = `ASSET: ${this.db.active}`;
-                    this.renderChart(chg >= 0 ? 'dark' : 'dark');
+            this.canvas = document.getElementById('mainChart');
+            this.ctx = this.canvas.getContext('2d');
+            
+            // Generate distinct histories
+            for(let s in this.stocks) {
+                const stk = this.stocks[s];
+                if(s === 'ODD') { // Special ODD Cliff Drop
+                    for(let i=0; i<150; i++) stk.hist.push(40 + Math.random()*15);
+                    for(let i=0; i<30; i++) stk.hist.push(stk.hist[stk.hist.length-1] * 0.7);
+                    for(let i=0; i<100; i++) stk.hist.push(15 + (Math.random()-0.5));
+                } else {
+                    for(let i=0; i<280; i++) {
+                        stk.p += stk.p * (stk.vol * (Math.random() - 0.5));
+                        stk.hist.push(stk.p);
+                    }
                 }
-            } catch(e) { console.warn("API Busy"); this.renderChart(); }
+            }
+
+            ui.loadProfile();
+            this.resize();
+            window.onresize = () => this.resize();
+            setInterval(() => this.tick(), 250);
+            this.animate();
         },
 
-        renderChart() {
-            const mount = document.getElementById('tv_chart_mount');
-            mount.innerHTML = "";
-            // SUCCESS-WAIT logic: Ensure container is ready
-            setTimeout(() => {
-                new TradingView.widget({
-                    "autosize": true, "symbol": this.db.active, "interval": "D",
-                    "timezone": "Etc/UTC", "theme": "dark", "style": "3",
-                    "container_id": "tv_chart_mount", "hide_top_toolbar": true,
-                    "hide_legend": true, "save_image": false, "backgroundColor": "#030303",
-                    "gridColor": "rgba(255,255,255,0.03)"
-                });
-            }, 300);
+        tick() {
+            for(let s in this.stocks) {
+                const stk = this.stocks[s];
+                let mv = (stk.vol * (Math.random() - 0.5));
+                if(s === 'JSDA' && Math.random() > 0.97) mv += 0.4; // Penny stock spike
+                stk.p += stk.p * mv;
+                stk.hist.push(stk.p);
+                if(stk.hist.length > 300) stk.hist.shift();
+            }
+            this.save();
+            this.updateUI();
         },
 
-        show(id, el) {
+        trade(type) {
+            const qty = parseInt(document.getElementById('qty').value) || 0;
+            const stk = this.stocks[this.active];
+            const cost = qty * stk.p;
+
+            if(type === 'buy' && this.data.cash >= cost && qty > 0) {
+                const totalCost = (this.data.avgCosts[this.active] * this.data.portfolio[this.active]) + cost;
+                this.data.portfolio[this.active] += qty;
+                this.data.avgCosts[this.active] = totalCost / this.data.portfolio[this.active];
+                this.data.cash -= cost;
+            } else if(type === 'sell' && this.data.portfolio[this.active] >= qty && qty > 0) {
+                this.data.cash += cost;
+                this.data.portfolio[this.active] -= qty;
+                if(this.data.portfolio[this.active] === 0) this.data.avgCosts[this.active] = 0;
+            }
+            this.save();
+            this.updateUI();
+        },
+
+        save() { localStorage.setItem('nv_v8', JSON.stringify(this.data)); },
+
+        updateUI() {
+            const stk = this.stocks[this.active];
+            const pStr = `$${stk.p.toLocaleString(undefined, {minimumFractionDigits: stk.precision})}`;
+            document.getElementById('sidePrice').innerText = pStr;
+            document.getElementById('cashDisp').innerText = `$${Math.floor(this.data.cash).toLocaleString()}`;
+            document.getElementById('unitsDisp').innerText = `${this.data.portfolio[this.active]} Shares`;
+            
+            const pnl = (stk.p - this.data.avgCosts[this.active]) * this.data.portfolio[this.active];
+            const pnlEl = document.getElementById('pnlDisp');
+            pnlEl.innerText = (pnl >= 0 ? '+$' : '-$') + Math.abs(pnl).toFixed(2);
+            pnlEl.style.color = pnl >= 0 ? 'var(--up)' : 'var(--down)';
+
+            if(document.getElementById('view-wallet').classList.contains('active')) ui.renderWallet();
+        },
+
+        changeStock(val) { this.active = val; this.updateUI(); },
+        resize() { this.canvas.width = this.canvas.offsetWidth; this.canvas.height = this.canvas.offsetHeight; },
+
+        animate() {
+            const ctx = this.ctx; const h = this.canvas.height; const w = this.canvas.width;
+            const hist = this.stocks[this.active].hist;
+            ctx.clearRect(0,0,w,h);
+            const min = Math.min(...hist); const max = Math.max(...hist); const range = (max - min) || 1;
+            ctx.beginPath(); ctx.strokeStyle = '#00ffcc'; ctx.lineWidth = 4;
+            for(let i=0; i<hist.length; i++) {
+                const x = (i / (hist.length-1)) * w;
+                const y = h - ((hist[i] - min) / range) * (h * 0.7) - (h * 0.15);
+                if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+            }
+            ctx.stroke();
+            const g = ctx.createLinearGradient(0,0,0,h);
+            g.addColorStop(0, 'rgba(0, 255, 204, 0.15)'); g.addColorStop(1, 'transparent');
+            ctx.fillStyle = g; ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.fill();
+            requestAnimationFrame(() => this.animate());
+        }
+    };
+
+    const ui = {
+        switchView(id) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.getElementById(`view-${id}`).classList.add('active');
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            el.classList.add('active');
-            if(id === 'market') this.renderChart();
+            document.getElementById('view-'+id).classList.add('active');
+            document.getElementById('nav-'+id[0]).classList.add('active');
+            if(id === 'wallet') this.renderWallet();
         },
-
-        handleImg(input) {
+        toggleSettings() { document.getElementById('settingsDrawer').classList.toggle('open'); },
+        loadProfile() {
+            document.getElementById('userNameDisp').innerText = sim.data.name;
+            document.getElementById('nameInput').value = sim.data.name;
+            if(sim.data.avatar) document.getElementById('userImgDisp').src = sim.data.avatar;
+        },
+        saveProfile() { sim.data.name = document.getElementById('nameInput').value; this.loadProfile(); sim.save(); },
+        handleAvatar(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    this.db.img = e.target.result;
-                    this.sync();
+                    sim.data.avatar = e.target.result;
+                    document.getElementById('userImgDisp').src = e.target.result;
+                    sim.save();
                 };
                 reader.readAsDataURL(input.files[0]);
             }
         },
-
-        save() {
-            this.db.name = document.getElementById('set-name').value || this.db.name;
-            this.sync();
-            alert("Profile Updated");
-        },
-
-        execute() {
-            const qty = parseInt(document.getElementById('tradeQty').value);
-            const cost = qty * this.price;
-            if(this.db.cash >= cost) {
-                this.db.cash -= cost;
-                let h = this.db.items.find(x => x.s === this.db.active);
-                if(h) h.q += qty; else this.db.items.push({s: this.db.active, q: qty});
-                this.sync();
-                alert("Order Filled");
+        renderWallet() {
+            const list = document.getElementById('walletList');
+            list.innerHTML = "";
+            for(let s in sim.stocks) {
+                const stk = sim.stocks[s];
+                const owned = sim.data.portfolio[s];
+                list.innerHTML += `
+                    <div class="market-card" onclick="sim.changeStock('${s}'); ui.switchView('market')">
+                        <div>
+                            <h3 style="font-weight:900; color:var(--accent)">${s}</h3>
+                            <p style="font-size:12px; color:var(--dim)">${owned} Shares Owned</p>
+                        </div>
+                        <div style="text-align:right">
+                            <div style="font-weight:900; font-size:18px;">$${stk.p.toLocaleString(undefined, {minimumFractionDigits: stk.precision})}</div>
+                            <div style="font-size:11px; color:var(--up)">View Chart</div>
+                        </div>
+                    </div>
+                `;
             }
         },
-
-        sync() {
-            localStorage.setItem('nv17_db', JSON.stringify(this.db));
-            document.getElementById('balance').innerText = `$${this.db.cash.toLocaleString()}`;
-            document.getElementById('p-name-display').innerText = this.db.name;
-            document.getElementById('set-name').value = this.db.name;
-            document.getElementById('p-img').src = this.db.img;
-            document.getElementById('userAvatarSmall').src = this.db.img;
-            
-            document.getElementById('vaultList').innerHTML = this.db.items.map(i => `
-                <div style="background:var(--panel); padding:20px; border-radius:12px; display:flex; justify-content:space-between; border:1px solid var(--border)">
-                    <strong>${i.s}</strong> <span>${i.q} Units</span>
-                </div>
-            `).join('') || '<p style="color:var(--dim)">No assets found.</p>';
-        }
+        resetAll() { localStorage.clear(); location.reload(); }
     };
-
-    window.onload = () => term.init();
+    window.onload = () => sim.init();
 </script>
 </body>
 </html>
