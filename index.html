@@ -3,228 +3,330 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NeuroVest Academy | Professional Paper Trading</title>
+    <title>NeuroVest Enterprise | 2026 Edition</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
         :root {
-            --bg: #030712; --sidebar: #0f172a; --accent: #22d3ee;
-            --neon-purple: #a855f7; --glass: rgba(15, 23, 42, 0.7);
-            --border: rgba(34, 211, 238, 0.15); --success: #10b981;
+            --bg: #020617; --card: rgba(15, 23, 42, 0.7); 
+            --accent: #22d3ee; --secondary: #a855f7;
+            --success: #10b981; --danger: #ef4444;
+            --border: rgba(34, 211, 238, 0.15);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: #f8fafc; display: flex; height: 100vh; overflow: hidden; }
+        body { 
+            font-family: 'Inter', system-ui, sans-serif; 
+            background: var(--bg); 
+            color: #f8fafc; 
+            display: flex; 
+            flex-direction: column;
+            height: 100vh; 
+            overflow: hidden; 
+        }
 
-        /* --- KEY ANIMATIONS --- */
-        @keyframes scanline { 0% { top: -100%; } 100% { top: 100%; } }
-        @keyframes pulse-neon { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        /* --- 1. THE CNBC NEWS TICKER --- */
+        .ticker-wrap {
+            width: 100%;
+            overflow: hidden;
+            background: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid var(--border);
+            height: 40px;
+            display: flex;
+            align-items: center;
+        }
 
-        /* --- DASHBOARD LAYOUT --- */
-        .sidebar { width: 70px; background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 25px 0; gap: 35px; }
-        .nav-icon { font-size: 26px; color: #475569; cursor: pointer; transition: 0.3s; position: relative; }
-        .nav-icon.active { color: var(--accent); filter: drop-shadow(0 0 10px var(--accent)); }
-        .nav-icon:hover { color: #cbd5e1; }
+        /* --- 2. LAYOUT --- */
+        .app-container { display: flex; flex-grow: 1; overflow: hidden; }
 
-        .main-container { flex-grow: 1; display: grid; grid-template-columns: 300px 1fr 380px; grid-template-rows: 60px 1fr; }
+        nav { 
+            width: 80px; 
+            background: rgba(15, 23, 42, 0.9); 
+            border-right: 1px solid var(--border); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 30px 0; 
+            gap: 30px; 
+            backdrop-filter: blur(20px);
+        }
 
-        header { grid-column: 1 / -1; background: rgba(15, 23, 42, 0.95); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; backdrop-filter: blur(10px); z-index: 10; }
-        .logo { font-weight: 900; letter-spacing: 3px; font-size: 1.2rem; background: linear-gradient(to right, var(--accent), var(--neon-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav-btn { 
+            font-size: 28px; 
+            color: #475569; 
+            cursor: pointer; 
+            padding: 12px; 
+            border-radius: 12px; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
 
-        /* --- LEFT PANEL: WATCHLIST & LEADERBOARD --- */
-        .left-panel { background: #070b14; border-right: 1px solid var(--border); padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 25px; }
-        .section-title { font-size: 0.75rem; font-weight: 800; color: #64748b; letter-spacing: 2px; margin-bottom: 15px; }
-        .item-row { display: flex; justify-content: space-between; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px; margin-bottom: 8px; transition: 0.2s; border: 1px solid transparent; }
-        .item-row:hover { background: rgba(34, 211, 238, 0.05); border-color: var(--border); }
+        .nav-btn:hover { color: var(--accent); transform: scale(1.1); background: rgba(34, 211, 238, 0.05); }
+        .nav-btn.active { color: var(--accent); background: rgba(34, 211, 238, 0.1); box-shadow: 0 0 20px rgba(34, 211, 238, 0.2); }
 
-        /* --- CENTER PANEL: TRADING FLOOR --- */
-        .center-panel { display: flex; flex-direction: column; padding: 20px; gap: 20px; }
-        .chart-box { flex-grow: 1; background: #000; border-radius: 16px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
-        .trade-bar { background: var(--glass); border: 1px solid var(--border); border-radius: 12px; padding: 15px; display: flex; gap: 15px; align-items: center; backdrop-filter: blur(20px); }
-        input[type="number"] { background: #1e293b; border: 1px solid var(--border); padding: 10px; border-radius: 6px; color: white; width: 100px; }
-        .btn { padding: 10px 25px; border-radius: 6px; font-weight: 800; border: none; cursor: pointer; transition: 0.3s; }
-        .btn-buy { background: var(--success); color: white; }
-        .btn-sell { background: #ef4444; color: white; }
-        .btn:hover { filter: brightness(1.2); transform: translateY(-2px); }
+        main { flex-grow: 1; display: flex; flex-direction: column; position: relative; }
 
-        /* --- RIGHT PANEL: ORACLE AI --- */
-        .oracle-panel { background: var(--sidebar); border-left: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-        .chat-display { flex-grow: 1; background: rgba(0,0,0,0.3); border-radius: 12px; padding: 15px; font-size: 0.85rem; border: 1px solid rgba(34, 211, 238, 0.05); overflow-y: auto; line-height: 1.6; }
-        .chat-msg { margin-bottom: 15px; animation: slideIn 0.3s ease-out; }
-        .ai-label { color: var(--accent); font-weight: bold; font-size: 0.7rem; margin-bottom: 4px; display: block; }
-        .user-label { color: var(--neon-purple); font-weight: bold; font-size: 0.7rem; margin-bottom: 4px; display: block; }
-        
-        /* Stats Cards */
-        .wallet-stat { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1px solid var(--border); padding: 15px; border-radius: 12px; text-align: center; }
-        .wallet-val { font-size: 1.5rem; font-weight: 900; color: var(--success); text-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
+        header { 
+            padding: 15px 40px; 
+            border-bottom: 1px solid var(--border); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: rgba(15, 23, 42, 0.4);
+        }
 
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+        /* --- SEARCH & UI --- */
+        .search-box { 
+            background: #1e293b; 
+            border: 1px solid var(--border); 
+            border-radius: 50px; 
+            padding: 10px 25px; 
+            width: 450px; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px;
+            transition: 0.3s;
+        }
+        .search-box:focus-within { border-color: var(--accent); box-shadow: 0 0 15px rgba(34, 211, 238, 0.3); }
+        .search-box input { background: transparent; border: none; color: white; width: 100%; outline: none; }
+
+        .view-section { display: none; padding: 30px; height: 100%; overflow-y: auto; }
+        .view-section.active { display: block; animation: zoomIn; animation-duration: 0.4s; }
+
+        /* --- COMPONENTS --- */
+        .glass-card { 
+            background: var(--card); 
+            border: 1px solid var(--border); 
+            border-radius: 24px; 
+            padding: 25px; 
+            backdrop-filter: blur(15px);
+            transition: 0.3s;
+        }
+
+        .terminal-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 380px; 
+            gap: 20px; 
+            height: calc(100vh - 200px); 
+        }
+
+        #chart_frame { border-radius: 20px; border: 1px solid var(--border); overflow: hidden; background: #000; }
+
+        /* --- BUTTONS --- */
+        .btn { padding: 14px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; transition: 0.3s; width: 100%; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-buy { background: var(--success); color: white; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2); }
+        .btn-sell { background: var(--danger); color: white; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2); }
+        .btn:hover { transform: translateY(-3px); filter: brightness(1.1); }
+
     </style>
 </head>
 <body>
 
-    <div class="sidebar">
-        <i class="ph ph-terminal-window nav-icon active"></i>
-        <i class="ph ph-chart-pie-slice nav-icon"></i>
-        <i class="ph ph-users nav-icon"></i>
-        <i class="ph ph-gear-six nav-icon" style="margin-top: auto;"></i>
+    <div class="ticker-wrap">
+        <div class="tradingview-widget-container">
+            <div class="tradingview-widget-container__widget"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
+            {
+                "symbols": [
+                    {"proName": "BITSTAMP:BTCUSD", "title": "Bitcoin"},
+                    {"proName": "NASDAQ:AAPL", "title": "Apple"},
+                    {"proName": "NASDAQ:NVDA", "title": "Nvidia"},
+                    {"proName": "NASDAQ:TSLA", "title": "Tesla"},
+                    {"proName": "FX_IDC:EURUSD", "title": "EUR/USD"}
+                ],
+                "showSymbolLogo": true, "colorTheme": "dark", "isTransparent": true, "displayMode": "adaptive", "locale": "en"
+            }
+            </script>
+        </div>
     </div>
 
-    <div class="main-container">
-        <header>
-            <div class="logo">NEUROVEST ACADEMY</div>
-            <div style="display: flex; gap: 20px; font-size: 0.8rem; font-weight: bold;">
-                <span style="color: var(--success);"><span style="animation: pulse-neon 2s infinite;">●</span> MARKET OPEN</span>
-                <span id="header-time">00:00:00</span>
-            </div>
-            <div class="user-profile" style="display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 0.75rem; color: #94a3b8;">Welcome, Student_01</span>
-                <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--neon-purple); border: 2px solid var(--accent);"></div>
-            </div>
-        </header>
+    <div class="app-container">
+        <nav>
+            <div style="font-weight: 900; color: var(--accent); font-size: 1.2rem;">NV</div>
+            <i class="ph ph-house-line nav-btn active" onclick="nav('dashboard', this)"></i>
+            <i class="ph ph-chart-line-up nav-btn" onclick="nav('terminal', this)"></i>
+            <i class="ph ph-graduation-cap nav-btn" onclick="nav('academy', this)"></i>
+            <i class="ph ph-gear nav-btn" onclick="nav('settings', this)"></i>
+        </nav>
 
-        <div class="left-panel">
-            <div>
-                <div class="section-title">YOUR PAPER WALLET</div>
-                <div class="wallet-stat">
-                    <div style="font-size: 0.7rem; color: #94a3b8; margin-bottom: 5px;">AVAILABLE EQUITY</div>
-                    <div class="wallet-val" id="balanceText">$10,000.00</div>
+        <main>
+            <header>
+                <div class="search-box">
+                    <i class="ph ph-magnifying-glass" style="color: var(--accent)"></i>
+                    <input type="text" id="mainSearch" placeholder="Search Ticker (e.g. BTC, ETH, AMZN)..." onkeypress="if(event.key==='Enter') doSearch()">
                 </div>
-            </div>
-
-            <div id="watchlist-section">
-                <div class="section-title">WATCHLIST</div>
-                <div class="item-row"><span>NVDA</span> <span style="color: var(--success);">+2.45%</span></div>
-                <div class="item-row"><span>TSLA</span> <span style="color: #ef4444;">-1.20%</span></div>
-                <div class="item-row"><span>BTC</span> <span style="color: var(--success);">+5.12%</span></div>
-            </div>
-
-            <div>
-                <div class="section-title">ACADEMY LEADERBOARD</div>
-                <div class="item-row" style="opacity: 0.5;"><span>1. AlphaTrader</span> <span>$45,200</span></div>
-                <div class="item-row" style="opacity: 0.5;"><span>2. WhaleWatcher</span> <span>$38,100</span></div>
-                <div class="item-row" style="border: 1px solid var(--accent);"><span>99. YOU</span> <span id="rankVal">$10,000</span></div>
-            </div>
-        </div>
-
-        <div class="center-panel">
-            <div class="chart-box">
-                <div id="tv_chart_container" style="height: 100%;"></div>
-            </div>
-            <div class="trade-bar">
-                <div style="flex-grow: 1;">
-                    <div style="font-size: 0.65rem; color: #64748b; margin-bottom: 5px; font-weight: bold;">ORDER QUANTITY</div>
-                    <input type="number" id="tradeQty" value="1" min="1">
+                
+                <div style="display: flex; gap: 15px;">
+                    <div class="glass-card" style="padding: 10px 20px; border-radius: 50px; border-color: var(--success);">
+                        <span style="font-size: 0.7rem; color: #94a3b8;">BANKROLL</span>
+                        <div id="displayBal" style="font-weight: 900; color: var(--success);">$10,000</div>
+                    </div>
                 </div>
-                <button class="btn btn-buy" onclick="handleTrade('BUY')">EXECUTE BUY</button>
-                <button class="btn btn-sell" onclick="handleTrade('SELL')">LIQUIDATE ALL</button>
-            </div>
-        </div>
+            </header>
 
-        <div class="oracle-panel">
-            <div class="section-title">NEURO-ORACLE AI COACH</div>
-            <div class="chat-display" id="chatDisplay">
-                <div class="chat-msg">
-                    <span class="ai-label">ORACLE</span>
-                    Welcome to the terminal. I am your financial tutor. I use real-time market data to help you learn. How can I assist your strategy today?
+            <section id="dashboard" class="view-section active">
+                <h2 style="margin-bottom: 20px;">Executive Overview</h2>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                    <div class="glass-card">
+                        <span style="font-size: 0.7rem; color: #94a3b8;">NET WORTH</span>
+                        <div style="font-size: 2rem; font-weight: 900; margin-top: 5px;" id="dashEquity">$10,000</div>
+                    </div>
+                    <div class="glass-card">
+                        <span style="font-size: 0.7rem; color: #94a3b8;">TRADING LEVEL</span>
+                        <div style="font-size: 2rem; font-weight: 900; margin-top: 5px; color: var(--secondary);" id="dashLvl">LVL 1</div>
+                    </div>
+                    <div class="glass-card">
+                        <span style="font-size: 0.7rem; color: #94a3b8;">MARKET SENTIMENT</span>
+                        <div style="font-size: 1.2rem; font-weight: bold; margin-top: 5px; color: var(--accent);">BULLISH / NEURAL</div>
+                    </div>
                 </div>
-            </div>
-            <div style="position: relative;">
-                <input type="text" id="aiInput" placeholder="Ask about dividends, risk, or this stock..." onkeypress="if(event.key==='Enter') callGemini()">
-                <i class="ph ph-paper-plane-right" style="position: absolute; right: 15px; top: 12px; color: var(--accent); cursor: pointer;" onclick="callGemini()"></i>
-            </div>
-        </div>
+            </section>
+
+            <section id="terminal" class="view-section">
+                <div class="terminal-grid">
+                    <div id="chart_frame"></div>
+                    <div class="glass-card" style="display: flex; flex-direction: column; gap: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h2 id="activeSym">NVDA</h2>
+                            <span class="glass-card" style="padding: 5px 10px; font-size: 0.7rem; border-color: var(--success); color: var(--success);">LIVE DATA</span>
+                        </div>
+                        
+                        <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px;">
+                            <label style="font-size: 0.7rem; color: #64748b;">ORDER TYPE</label>
+                            <select style="width: 100%; background: transparent; border: none; color: white; font-weight: bold; padding-top: 5px; outline: none;">
+                                <option>Market Executive</option>
+                                <option>Limit Trigger</option>
+                                <option>Call Option (Long)</option>
+                                <option>Put Option (Short)</option>
+                            </select>
+                        </div>
+
+                        <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px;">
+                            <label style="font-size: 0.7rem; color: #64748b;">QUANTITY</label>
+                            <input type="number" id="tradeQty" value="1" style="width: 100%; background: transparent; border: none; color: white; font-weight: bold; padding-top: 5px; outline: none;">
+                        </div>
+
+                        <div style="flex-grow: 1;"></div>
+                        <button class="btn btn-buy" onclick="handleTrade('BUY')">Place Buy Order</button>
+                        <button class="btn btn-sell" onclick="handleTrade('SELL')">Liquidate Asset</button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="academy" class="view-section">
+                <div class="glass-card" style="height: 100%; display: flex; flex-direction: column;">
+                    <h3>Neuro-Academy Tutor</h3>
+                    <div id="chatFeed" style="flex-grow: 1; overflow-y: auto; margin: 20px 0; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 15px;">
+                        <p style="color: var(--accent)"><b>Oracle:</b> Hello Student. Ready to master the markets? I am powered by Gemini 3 Flash. Ask me anything.</p>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="chatIn" placeholder="Explain 'Stop Loss' in trading..." style="flex-grow: 1; background: #1e293b; border: 1px solid var(--border); padding: 15px; border-radius: 12px; color: white;">
+                        <button class="btn-buy" style="width: 120px;" onclick="talkToAI()">ASK AI</button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="settings" class="view-section">
+                <h2 style="margin-bottom: 20px;">Terminal Settings</h2>
+                <div class="glass-card" style="width: 400px;">
+                    <p class="label">Primary Interface Glow</p>
+                    <div style="display: flex; gap: 15px; margin-top: 15px;">
+                        <div style="width: 35px; height: 35px; border-radius: 50%; background: #22d3ee; cursor: pointer;" onclick="changeTheme('#22d3ee')"></div>
+                        <div style="width: 35px; height: 35px; border-radius: 50%; background: #f472b6; cursor: pointer;" onclick="changeTheme('#f472b6')"></div>
+                        <div style="width: 35px; height: 35px; border-radius: 50%; background: #10b981; cursor: pointer;" onclick="changeTheme('#10b981')"></div>
+                        <div style="width: 35px; height: 35px; border-radius: 50%; background: #a855f7; cursor: pointer;" onclick="changeTheme('#a855f7')"></div>
+                    </div>
+                </div>
+            </section>
+        </main>
     </div>
 
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <script>
-        // --- 1. CONFIG & DATA ---
+        // STATE
         const API_KEY = "AIzaSyC8y9dlibVRx5CjF_dNDtQvHpri8IRoOdY";
-        let state = JSON.parse(localStorage.getItem('nv_academy_v1')) || { balance: 10000, holdings: {} };
-        let currentSymbol = "NVDA";
+        let state = JSON.parse(localStorage.getItem('nv_master')) || { balance: 10000, xp: 120, color: '#22d3ee', symbol: 'NVDA' };
 
-        // --- 2. TRADINGVIEW WIDGET ---
-        const widget = new TradingView.widget({
-            "autosize": true, "symbol": currentSymbol, "interval": "D", "timezone": "Etc/UTC",
-            "theme": "dark", "style": "1", "locale": "en", "enable_publishing": false,
-            "hide_side_toolbar": false, "container_id": "tv_chart_container",
-            "onSymbolChange": (s) => { currentSymbol = s.symbol; }
-        });
-
-        // --- 3. UI UPDATER ---
-        function updateUI() {
-            document.getElementById('balanceText').innerText = `$${state.balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-            document.getElementById('rankVal').innerText = `$${state.balance.toLocaleString()}`;
-            localStorage.setItem('nv_academy_v1', JSON.stringify(state));
+        // NAVIGATION
+        function nav(id, btn) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            btn.classList.add('active');
+            if(id === 'terminal') renderChart(state.symbol);
         }
 
-        // --- 4. TRADE LOGIC ---
-        async function handleTrade(type) {
-            const qty = parseInt(document.getElementById('tradeQty').value);
-            // In a real version, you'd fetch real price from Finnhub or similar here.
-            // For the demo, we use a placeholder "market price" of $250.
-            const estimatedPrice = 250; 
-            const totalCost = estimatedPrice * qty;
-
-            if (type === 'BUY') {
-                if (state.balance >= totalCost) {
-                    state.balance -= totalCost;
-                    state.holdings[currentSymbol] = (state.holdings[currentSymbol] || 0) + qty;
-                    pushChat("SYSTEM", `Order Confirmed: Bought ${qty} shares of ${currentSymbol}.`);
-                } else {
-                    pushChat("ORACLE", "Insufficient funds. Remember: investing requires capital management!");
-                }
-            } else {
-                if (state.holdings[currentSymbol]) {
-                    state.balance += (estimatedPrice * state.holdings[currentSymbol]);
-                    delete state.holdings[currentSymbol];
-                    pushChat("SYSTEM", `Liquidated all ${currentSymbol} positions.`);
-                }
-            }
-            updateUI();
+        // SEARCH
+        function doSearch() {
+            const val = document.getElementById('mainSearch').value.toUpperCase();
+            if(!val) return;
+            state.symbol = val;
+            document.getElementById('activeSym').innerText = val;
+            nav('terminal', document.querySelectorAll('.nav-btn')[1]);
+            document.getElementById('mainSearch').value = "";
         }
 
-        // --- 5. GEMINI AI COACH ---
-        async function callGemini() {
-            const input = document.getElementById('aiInput');
-            const query = input.value.trim();
-            if (!query) return;
+        // CHART
+        function renderChart(sym) {
+            new TradingView.widget({
+                "autosize": true, "symbol": sym, "interval": "D", "theme": "dark",
+                "style": "1", "container_id": "chart_frame", "hide_side_toolbar": false,
+                "backgroundColor": "rgba(2, 6, 23, 1)"
+            });
+        }
 
-            pushChat("USER", query);
+        // AI
+        async function talkToAI() {
+            const input = document.getElementById('chatIn');
+            const feed = document.getElementById('chatFeed');
+            const q = input.value;
+            if(!q) return;
+
+            feed.innerHTML += `<p style="margin-top:15px; color: #94a3b8;"><b>You:</b> ${q}</p>`;
             input.value = "";
-
-            const loadingId = pushChat("ORACLE", "Synthesizing market nodes...");
-
+            
             try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: `You are NeuroVest, a cool, professional financial tutor for teenagers. Answer simply but with real terminology: ${query}` }] }]
-                    })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: `You are NeuroVest Oracle, a professional financial AI for students. Keep it high-end and informative. Question: ${q}` }] }] })
                 });
-                const data = await response.json();
-                const reply = data.candidates[0].content.parts[0].text;
-                document.getElementById(loadingId).innerHTML = `<span class="ai-label">ORACLE</span>${reply}`;
-            } catch (err) {
-                document.getElementById(loadingId).innerText = "Oracle link failed. Check API key.";
+                const data = await res.json();
+                feed.innerHTML += `<p style="margin-top:10px; color: var(--accent);"><b>Oracle:</b> ${data.candidates[0].content.parts[0].text}</p>`;
+                state.xp += 40;
+                update();
+            } catch(e) { feed.innerHTML += `<p>Connection Error.</p>`; }
+            feed.scrollTop = feed.scrollHeight;
+        }
+
+        // SYSTEM
+        function handleTrade(type) {
+            const q = parseInt(document.getElementById('tradeQty').value);
+            const price = 250; // Simulation price
+            if(type === 'BUY' && state.balance >= (price * q)) {
+                state.balance -= (price * q);
+                state.xp += 100;
+            } else if(type === 'SELL') {
+                state.balance += (price * q);
             }
+            update();
         }
 
-        function pushChat(sender, text) {
-            const display = document.getElementById('chatDisplay');
-            const id = "msg-" + Date.now();
-            const labelClass = sender === "USER" ? "user-label" : "ai-label";
-            display.innerHTML += `<div class="chat-msg" id="${id}"><span class="${labelClass}">${sender}</span>${text}</div>`;
-            display.scrollTop = display.scrollHeight;
-            return id;
+        function changeTheme(c) {
+            state.color = c;
+            document.documentElement.style.setProperty('--accent', c);
+            update();
         }
 
-        // --- 6. UTILS ---
-        setInterval(() => { document.getElementById('header-time').innerText = new Date().toLocaleTimeString(); }, 1000);
-        updateUI();
+        function update() {
+            document.getElementById('displayBal').innerText = `$${state.balance.toLocaleString()}`;
+            document.getElementById('dashEquity').innerText = `$${state.balance.toLocaleString()}`;
+            document.getElementById('dashLvl').innerText = `LVL ${Math.floor(state.xp/100)}`;
+            localStorage.setItem('nv_master', JSON.stringify(state));
+        }
 
+        // INIT
+        document.documentElement.style.setProperty('--accent', state.color);
+        update();
     </script>
 </body>
 </html>
