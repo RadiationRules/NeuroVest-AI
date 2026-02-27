@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-    <title>NeuroVest V30 // Clean Stream</title>
+    <title>NeuroVest V31 // High Volatility</title>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
         :root {
@@ -13,49 +13,40 @@
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         body { background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-
         #app { display: grid; grid-template-columns: 70px 280px 1fr 340px; flex: 1; overflow: hidden; }
 
-        /* SIDEBAR */
+        /* SIDEBAR & WATCHLIST */
         .sidebar { background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 25px 0; gap: 20px; }
         .nav-link { width: 44px; height: 44px; border-radius: 12px; color: var(--dim); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; font-size: 22px; }
         .nav-link.active { background: var(--accent); color: #000; box-shadow: 0 0 15px rgba(0, 242, 255, 0.4); }
-
-        /* WATCHLIST */
         .watchlist { background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
         .search-wrap { padding: 20px; border-bottom: 1px solid var(--border); position: relative; }
         .search-bar { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 10px 10px 35px; color: #fff; font-size: 13px; outline: none; }
         .search-icon { position: absolute; left: 32px; top: 31px; color: var(--dim); }
-        
-        .stock-item { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.02); cursor: pointer; transition: 0.15s; }
-        .stock-item:hover { background: rgba(255,255,255,0.03); }
+        .stock-item { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.02); cursor: pointer; }
         .stock-item.active { background: rgba(0, 242, 255, 0.05); border-left: 3px solid var(--accent); }
 
         /* VIEWPORT */
         .viewport { display: flex; flex-direction: column; position: relative; background: #000; }
         header { height: 70px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 25px; background: var(--panel); }
-        
-        .t-pill { display: flex; gap: 4px; background: var(--bg); padding: 4px; border-radius: 10px; border: 1px solid var(--border); }
+        .t-pill { display: flex; gap: 4px; background: var(--bg); padding: 4px; border-radius: 10px; }
         .t-btn { border: none; background: none; color: var(--dim); padding: 6px 14px; border-radius: 7px; font-size: 11px; font-weight: 800; cursor: pointer; }
         .t-btn.active { background: var(--card); color: var(--accent); }
-
-        .chart-area { flex: 1; position: relative; overflow: hidden; }
+        .chart-area { flex: 1; position: relative; }
         canvas { width: 100%; height: 100%; }
 
-        /* PORTFOLIO DASHBOARD */
+        /* PORTFOLIO */
         #wallet { position: absolute; inset: 0; background: var(--bg); z-index: 100; padding: 40px; display: none; overflow-y: auto; }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px; }
         .stat-card { background: var(--panel); padding: 25px; border-radius: 16px; border: 1px solid var(--border); }
-        .stat-val { font-size: 28px; font-weight: 900; margin-top: 5px; }
+        .asset-table { width: 100%; border-collapse: collapse; }
+        .asset-table th { text-align: left; padding: 12px; color: var(--dim); font-size: 11px; border-bottom: 1px solid var(--border); }
+        .asset-table td { padding: 20px 12px; border-bottom: 1px solid var(--border); }
 
-        .asset-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        .asset-table th { text-align: left; padding: 12px; color: var(--dim); font-size: 11px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
-        .asset-table td { padding: 20px 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
-
-        /* TRADE PANEL */
+        /* TRADE SIDEBAR */
         .trade-sidebar { background: var(--panel); border-left: 1px solid var(--border); padding: 30px; display: flex; flex-direction: column; gap: 24px; }
-        .price-label { font-size: 42px; font-weight: 900; letter-spacing: -2px; }
-        .btn { border: none; padding: 18px; border-radius: 14px; font-weight: 900; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
+        .price-label { font-size: 42px; font-weight: 950; letter-spacing: -2px; }
+        .btn { border: none; padding: 18px; border-radius: 14px; font-weight: 900; cursor: pointer; text-transform: uppercase; }
         .btn-buy { background: var(--up); color: #000; }
         .btn-sell { border: 2px solid var(--down); color: var(--down); background: none; }
 
@@ -73,7 +64,7 @@
     <aside class="watchlist">
         <div class="search-wrap">
             <i class="ph ph-magnifying-glass search-icon"></i>
-            <input type="text" class="search-bar" placeholder="Search Tickers..." oninput="ui.filter(this.value)">
+            <input type="text" class="search-bar" placeholder="Search..." oninput="ui.filter(this.value)">
         </div>
         <div id="list" style="flex:1; overflow-y:auto;"></div>
     </aside>
@@ -88,7 +79,6 @@
                 <button class="t-btn active" id="btn-1m" onclick="sim.setView(150, this)">1m</button>
                 <button class="t-btn" onclick="sim.setView(600, this)">5m</button>
                 <button class="t-btn" onclick="sim.setView(2000, this)">1H</button>
-                <button class="t-btn" onclick="sim.setView(5000, this)">5H</button>
             </div>
         </header>
 
@@ -96,59 +86,40 @@
 
         <div id="wallet">
             <div style="margin-bottom:40px;">
-                <span style="font-size:12px; font-weight:800; color:var(--dim); letter-spacing:1px;">TOTAL PORTFOLIO VALUE</span>
+                <span style="font-size:12px; font-weight:800; color:var(--dim);">NET WORTH</span>
                 <h1 id="w-net" style="font-size:56px; font-weight:950; letter-spacing:-2px;">$10,000.00</h1>
             </div>
-
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div style="font-size:10px; color:var(--dim); font-weight:800;">CASH BALANCE</div>
-                    <div id="w-cash" class="stat-val">$10,000</div>
+                    <div style="font-size:10px; color:var(--dim); font-weight:800;">CASH</div>
+                    <div id="w-cash" style="font-size:24px; font-weight:900;">$10,000</div>
                 </div>
                 <div class="stat-card">
-                    <div style="font-size:10px; color:var(--dim); font-weight:800;">OPEN POSITIONS</div>
-                    <div id="w-count" class="stat-val">0</div>
-                </div>
-                <div class="stat-card">
-                    <div style="font-size:10px; color:var(--dim); font-weight:800;">SYSTEM STATUS</div>
-                    <div class="stat-val" style="color:var(--accent); font-size:18px;">● NOMINAL</div>
+                    <div style="font-size:10px; color:var(--dim); font-weight:800;">POSITIONS</div>
+                    <div id="w-count" style="font-size:24px; font-weight:900;">0</div>
                 </div>
             </div>
-
             <table class="asset-table">
-                <thead>
-                    <tr>
-                        <th>Asset</th>
-                        <th>Price</th>
-                        <th>Holdings</th>
-                        <th>Avg Cost</th>
-                        <th>Market Value</th>
-                        <th>Return</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>Asset</th><th>Price</th><th>Holdings</th><th>Market Value</th><th>Return</th></tr></thead>
                 <tbody id="w-table-body"></tbody>
             </table>
         </div>
     </main>
 
-    <aside class="trade-sidebar" id="trade-panel">
+    <aside class="trade-sidebar">
         <div id="trade-price-group">
-            <div style="font-size:10px; color:var(--dim); font-weight:800; letter-spacing:1px; margin-bottom:5px;">MARKET PRICE</div>
+            <div style="font-size:10px; color:var(--dim); font-weight:800;">MARKET PRICE</div>
             <div id="price" class="price-label">$0.00</div>
             <div id="pl" style="font-weight:900; font-size:13px; margin-top:5px;">---</div>
         </div>
-
         <div style="background:var(--card); padding:20px; border-radius:15px; border:1px solid var(--border);">
-            <div style="font-size:10px; color:var(--dim); font-weight:800;">HOLDINGS</div>
+            <div style="font-size:10px; color:var(--dim); font-weight:800;">OWNED</div>
             <div id="t-qty" style="font-size:24px; font-weight:900; margin-top:5px;">0 Shares</div>
-            <div id="t-avg" style="font-size:11px; color:var(--accent);">Avg: $0.00</div>
         </div>
-
         <div>
             <label style="font-size:10px; color:var(--dim); font-weight:800; display:block; margin-bottom:10px;">QUANTITY</label>
             <input type="number" id="trade-qty" value="1" min="1" style="width:100%; background:var(--card); border:1px solid var(--border); padding:18px; color:#fff; font-size:24px; font-weight:900; border-radius:12px; outline:none;">
         </div>
-
         <div style="display:flex; flex-direction:column; gap:12px;">
             <button class="btn btn-buy" onclick="sim.trade('buy')">Buy</button>
             <button class="btn btn-sell" onclick="sim.trade('sell')">Sell</button>
@@ -159,20 +130,20 @@
 <script>
     const sim = {
         ticker: 'NVDA',
-        viewPoints: 150, // Default to 1m
+        viewPoints: 150, 
         historyMap: {},
-        db: JSON.parse(localStorage.getItem('nv_v30')) || { 
+        db: JSON.parse(localStorage.getItem('nv_v31')) || { 
             cash: 10000, 
             portfolio: { ODD: {q:0, a:0}, TSLA: {q:0, a:0}, "BRK.A": {q:0, a:0}, JSDA: {q:0, a:0}, NVDA: {q:0, a:0}, NVO: {q:0, a:0}, RBLX: {q:0, a:0} } 
         },
         stocks: {
-            'NVDA': { name: 'NVIDIA Corp', p: 824.15 },
-            'NVO': { name: 'Novo Nordisk', p: 121.40 },
-            'RBLX': { name: 'Roblox Corp', p: 38.50 },
-            'ODD': { name: 'Oddity Tech', p: 13.75 },
-            'TSLA': { name: 'Tesla Inc', p: 405.00 },
-            'BRK.A': { name: 'Berkshire', p: 753140 },
-            'JSDA': { name: 'Jones Soda', p: 0.31 }
+            'NVDA': { name: 'NVIDIA Corp', p: 824.15, trend: 0 },
+            'NVO': { name: 'Novo Nordisk', p: 121.40, trend: 0 },
+            'RBLX': { name: 'Roblox Corp', p: 38.50, trend: 0 },
+            'TSLA': { name: 'Tesla Inc', p: 405.00, trend: 0 },
+            'ODD': { name: 'Oddity Tech', p: 13.75, trend: 0 },
+            'BRK.A': { name: 'Berkshire', p: 753140, trend: 0 },
+            'JSDA': { name: 'Jones Soda', p: 0.31, trend: 0 }
         },
 
         init() {
@@ -180,12 +151,9 @@
             this.ctx = this.canvas.getContext('2d');
             window.onresize = () => this.resize();
             this.resize();
-
             for(let k in this.stocks) {
                 this.historyMap[k] = Array(5000).fill(this.stocks[k].p);
-                if(!this.db.portfolio[k]) this.db.portfolio[k] = {q:0, a:0};
             }
-
             this.run();
             ui.renderList();
         },
@@ -194,9 +162,20 @@
             setInterval(() => {
                 for(let k in this.stocks) {
                     let s = this.stocks[k];
-                    let noise = (Math.random() - 0.5) * 0.0012;
-                    let anomaly = Math.random() < 0.0008 ? (Math.random() - 0.6) * 0.06 : 0;
-                    s.p *= (1 + noise + anomaly);
+                    // V31 High-Volatility Math
+                    // Momentum: Trend builds over time
+                    s.trend += (Math.random() - 0.48) * 0.001; // Slight upward bias (0.48 vs 0.5)
+                    s.trend *= 0.95; // Trend decay (friction)
+                    
+                    let volatility = 0.004; // High base volatility
+                    let move = s.trend + (Math.random() - 0.5) * volatility;
+                    
+                    // Rare major crashes/spikes
+                    if(Math.random() < 0.0005) move = (Math.random() - 0.7) * 0.15;
+
+                    s.p *= (1 + move);
+                    if(s.p < 0.01) s.p = 0.01; // Floor price
+
                     this.historyMap[k].push(s.p);
                     if(this.historyMap[k].length > 5000) this.historyMap[k].shift();
                 }
@@ -216,7 +195,6 @@
             let q = Math.max(0, parseInt(document.getElementById('trade-qty').value) || 0);
             let p = this.stocks[this.ticker].p;
             let pos = this.db.portfolio[this.ticker];
-
             if(type === 'buy' && this.db.cash >= q*p) {
                 pos.a = ((pos.q * pos.a) + (q * p)) / (pos.q + q);
                 pos.q += q;
@@ -230,7 +208,7 @@
             ui.update();
         },
 
-        save() { localStorage.setItem('nv_v30', JSON.stringify(this.db)); },
+        save() { localStorage.setItem('nv_v31', JSON.stringify(this.db)); },
         resize() {
             this.canvas.width = this.canvas.offsetWidth * devicePixelRatio;
             this.canvas.height = this.canvas.offsetHeight * devicePixelRatio;
@@ -242,7 +220,6 @@
             ctx.clearRect(0,0,w,h);
             let data = this.historyMap[this.ticker].slice(-this.viewPoints);
             let min = Math.min(...data), max = Math.max(...data), range = (max - min) || 1;
-            
             ctx.beginPath();
             ctx.strokeStyle = data[0] < data[data.length-1] ? '#00ff88' : '#ff3366';
             ctx.lineWidth = 2.5;
@@ -261,10 +238,7 @@
             const walletOpen = t === 'wallet';
             document.getElementById('wallet').style.display = walletOpen ? 'block' : 'none';
             document.getElementById('main-header').style.visibility = walletOpen ? 'hidden' : 'visible';
-            
-            // Hide specific trade price UI when on portfolio
             document.getElementById('trade-price-group').style.display = walletOpen ? 'none' : 'block';
-
             document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
             document.getElementById('n-'+t).classList.add('active');
             if(walletOpen) this.renderWallet();
@@ -274,13 +248,10 @@
             let html = "";
             for(let k in sim.stocks) {
                 if(!k.toLowerCase().includes(f.toLowerCase())) continue;
-                html += `
-                <div class="stock-item ${sim.ticker===k?'active':''}" onclick="sim.ticker='${k}'; ui.update(); ui.renderList();">
+                html += `<div class="stock-item ${sim.ticker===k?'active':''}" onclick="sim.ticker='${k}'; ui.update(); ui.renderList();">
                     <div style="display:flex; justify-content:space-between; font-weight:900;">
-                        <span>${k}</span>
-                        <span style="color:var(--up)">$${sim.stocks[k].p.toFixed(2)}</span>
-                    </div>
-                </div>`;
+                        <span>${k}</span><span style="color:var(--up)">$${sim.stocks[k].p.toFixed(2)}</span>
+                    </div></div>`;
             }
             document.getElementById('list').innerHTML = html;
         },
@@ -291,43 +262,30 @@
             document.getElementById('h-name').innerText = s.name.toUpperCase();
             document.getElementById('h-ticker').innerText = sim.ticker + " / USD";
             document.getElementById('t-qty').innerText = `${pos.q} Shares`;
-            document.getElementById('t-avg').innerText = `Avg: $${pos.a.toFixed(2)}`;
             let pl = pos.q > 0 ? ((s.p - pos.a) / pos.a * 100) : 0;
             let plEl = document.getElementById('pl');
             plEl.innerText = pos.q > 0 ? `${pl >= 0 ? '+' : ''}${pl.toFixed(2)}% P/L` : '---';
             plEl.style.color = pl >= 0 ? 'var(--up)' : 'var(--down)';
         },
         renderWallet() {
-            let net = sim.db.cash;
-            let activeCount = 0;
-            let html = "";
+            let net = sim.db.cash; let activeCount = 0; let html = "";
             for(let k in sim.stocks) {
                 let pos = sim.db.portfolio[k];
                 if(pos.q > 0) {
-                    activeCount++;
-                    let val = pos.q * sim.stocks[k].p;
-                    net += val;
+                    activeCount++; let val = pos.q * sim.stocks[k].p; net += val;
                     let ret = ((sim.stocks[k].p - pos.a) / pos.a * 100);
-                    html += `
-                    <tr>
-                        <td style="font-weight:900;">${k}</td>
-                        <td>$${sim.stocks[k].p.toFixed(2)}</td>
-                        <td>${pos.q}</td>
-                        <td>$${pos.a.toFixed(2)}</td>
-                        <td>$${val.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
-                        <td style="color:${ret >= 0 ? 'var(--up)' : 'var(--down)'}; font-weight:900;">
-                            ${ret >= 0 ? '+' : ''}${ret.toFixed(2)}%
-                        </td>
-                    </tr>`;
+                    html += `<tr><td style="font-weight:900;">${k}</td><td>$${sim.stocks[k].p.toFixed(2)}</td>
+                        <td>${pos.q}</td><td>$${val.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+                        <td style="color:${ret >= 0 ? 'var(--up)' : 'var(--down)'}; font-weight:900;">${ret >= 0 ? '+' : ''}${ret.toFixed(2)}%</td></tr>`;
                 }
             }
             document.getElementById('w-net').innerText = `$${net.toLocaleString(undefined, {minimumFractionDigits:2})}`;
             document.getElementById('w-cash').innerText = `$${sim.db.cash.toLocaleString(undefined, {maximumFractionDigits:0})}`;
             document.getElementById('w-count').innerText = activeCount;
-            document.getElementById('w-table-body').innerHTML = html || '<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--dim);">No Active Positions</td></tr>';
+            document.getElementById('w-table-body').innerHTML = html || '<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--dim);">No Active Positions</td></tr>';
         }
     };
     sim.init();
 </script>
 </body>
-</html>
+</html> 
